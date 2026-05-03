@@ -1,6 +1,7 @@
 export type Phase =
   | 'START'
   | 'LOBBY'
+  | 'WAITING_LOBBY'
   | 'SETTER_SETUP'
   | 'CHOOSER_PICK'
   | 'RESULT'
@@ -37,6 +38,7 @@ export interface GameState {
   timerEnabled: boolean;
   timerSeconds: number;
   timerStartedAt: string | null;
+  readyFlags: [boolean, boolean];
 }
 
 export const WIN_SCORE = 40;

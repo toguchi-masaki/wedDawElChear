@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useParams, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useRoom } from './hooks/useRoom';
 import { StartScreen } from './components/StartScreen';
 import { JoinScreen } from './components/JoinScreen';
@@ -9,6 +9,13 @@ import { ChooserPickScreen } from './components/ChooserPickScreen';
 import { ResultScreen } from './components/ResultScreen';
 import { GameOverScreen } from './components/GameOverScreen';
 import { Scoreboard } from './components/Scoreboard';
+import { SpectatorScreen } from './components/SpectatorScreen';
+
+function GameRoomRoute() {
+  const [searchParams] = useSearchParams();
+  if (searchParams.get('role') === 'spectator') return <SpectatorScreen />;
+  return <GameRoom />;
+}
 
 function GameRoom() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -130,7 +137,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<main><StartScreen /></main>} />
-        <Route path="/game/:roomId" element={<GameRoom />} />
+        <Route path="/game/:roomId" element={<GameRoomRoute />} />
       </Routes>
     </BrowserRouter>
   );

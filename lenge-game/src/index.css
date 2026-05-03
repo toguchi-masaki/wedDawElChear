@@ -469,3 +469,87 @@ h2 {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ── Countdown Timer ── */
+.countdown-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.countdown-number {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+  transition: color 0.2s;
+  min-width: 3ch;
+  text-align: center;
+}
+
+.countdown-number.urgent {
+  color: var(--out);
+  animation: pulse-urgent 0.6s ease-in-out infinite;
+}
+
+.countdown-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: var(--surface2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.countdown-bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 99px;
+  transition: width 0.2s linear, background 0.2s;
+}
+
+.countdown-bar.urgent {
+  background: var(--out);
+}
+
+@keyframes pulse-urgent {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+/* ── Spectator ── */
+.spectator-badge {
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+}
+
+.spectator-count {
+  font-size: 0.8rem;
+  color: var(--text-soft);
+}
+
+.spectator-view {
+  gap: 16px;
+}
+
+.spectator-phase-banner {
+  width: 100%;
+  padding: 10px 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-soft);
+}
+
+.spectator-invite summary {
+  font-size: 0.85rem;
+}

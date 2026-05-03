@@ -2,10 +2,14 @@ import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createRoom } from '../lib/roomUtils';
 
+const TIMER_OPTIONS = [10, 20, 30, 60];
+
 export function StartScreen() {
   const nameRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [timerEnabled, setTimerEnabled] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(30);
   const navigate = useNavigate();
 
   const handleCreate = async () => {
@@ -13,7 +17,7 @@ export function StartScreen() {
     setLoading(true);
     setError(null);
     try {
-      const roomId = await createRoom(name);
+      const roomId = await createRoom(name, timerEnabled, timerSeconds);
       navigate(`/game/${roomId}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'ルームの作成に失敗しました');
@@ -34,6 +38,34 @@ export function StartScreen() {
           <label>あなたの名前</label>
           <input ref={nameRef} type="text" defaultValue="Player 1" placeholder="Player 1" autoFocus />
         </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}>
+            <input
+              type="checkbox"
+              checked={timerEnabled}
+              onChange={(e) => setTimerEnabled(e.target.checked)}
+              style={{ width: 18, height: 18, accentColor: 'var(--accent)', cursor: 'pointer' }}
+            />
+            <span className="sub">⏱ 思考時間制限</span>
+          </label>
+
+          {timerEnabled && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {TIMER_OPTIONS.map((s) => (
+                <button
+                  key={s}
+                  className={`btn ${timerSeconds === s ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{ flex: 1, minWidth: 48 }}
+                  onClick={() => setTimerSeconds(s)}
+                >
+                  {s}秒
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         {error && <p style={{ color: 'var(--out)', fontSize: '0.85rem' }}>{error}</p>}
       </div>
 

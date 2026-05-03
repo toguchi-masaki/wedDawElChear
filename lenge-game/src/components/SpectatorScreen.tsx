@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useSpectatorRoom } from '../hooks/useSpectatorRoom';
 import { Scoreboard } from './Scoreboard';
 import { LengeGrid } from './LengeGrid';
+import { CountdownTimer } from './CountdownTimer';
 
 const PHASE_LABELS: Record<string, string> = {
   LOBBY: '対戦開始待ち',
@@ -75,6 +76,13 @@ export function SpectatorScreen() {
             <div className="spectator-phase-banner">
               <span>{PHASE_LABELS[phase] ?? phase}</span>
             </div>
+
+            {gameState.timerEnabled && gameState.timerStartedAt && (phase === 'SETTER_SETUP' || phase === 'CHOOSER_PICK') && (
+              <CountdownTimer
+                timerStartedAt={gameState.timerStartedAt}
+                timerSeconds={gameState.timerSeconds}
+              />
+            )}
 
             <LengeGrid
               deactivated={deactivated}

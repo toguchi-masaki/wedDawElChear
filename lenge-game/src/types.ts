@@ -34,6 +34,9 @@ export interface GameState {
   gameOver: boolean;
   winnerIdx: 0 | 1 | -1;
   winReason: string;
+  timerEnabled: boolean;
+  timerSeconds: number;
+  timerStartedAt: string | null;
 }
 
 export const WIN_SCORE = 40;

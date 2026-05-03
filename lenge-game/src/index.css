@@ -146,11 +146,53 @@ h2 {
 }
 
 /* ── Game Header ── */
+.disconnect-banner {
+  width: 100%;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-radius: 10px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--warning);
+  margin-bottom: 4px;
+  animation: fadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.disconnect-countdown {
+  font-size: .8rem;
+  font-weight: 500;
+  color: var(--out);
+  white-space: nowrap;
+}
+
 .game-header {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
   width: 100%;
   margin-bottom: 4px;
+}
+.btn-surrender {
+  background: transparent;
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  color: var(--out);
+  border-radius: 10px;
+  padding: 6px 16px;
+  font-size: .8rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all .2s ease;
+  letter-spacing: 0.02em;
+}
+.btn-surrender:hover {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: var(--out);
+  box-shadow: 0 0 16px rgba(248, 113, 113, 0.2);
 }
 .btn-abort {
   background: transparent;

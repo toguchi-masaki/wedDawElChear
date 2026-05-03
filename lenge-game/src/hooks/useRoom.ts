@@ -13,7 +13,6 @@ export function useRoom(roomId: string) {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [opponentConnected, setOpponentConnected] = useState(true);
-  const [disconnectedAt, setDisconnectedAt] = useState<number | null>(null);
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
   const opponentEverSeenRef = useRef(false);
@@ -82,10 +81,8 @@ export function useRoom(roomId: string) {
         if (opponentPresent) {
           opponentEverSeenRef.current = true;
           setOpponentConnected(true);
-          setDisconnectedAt(null);
         } else if (opponentEverSeenRef.current) {
           setOpponentConnected(false);
-          setDisconnectedAt((prev) => prev ?? Date.now());
         }
       })
       .subscribe(async (status) => {
@@ -114,5 +111,5 @@ export function useRoom(roomId: string) {
     [roomId]
   );
 
-  return { gameState, dispatch, myIdx, isLoading, isConnected, error, opponentConnected, disconnectedAt };
+  return { gameState, dispatch, myIdx, isLoading, isConnected, error, opponentConnected };
 }

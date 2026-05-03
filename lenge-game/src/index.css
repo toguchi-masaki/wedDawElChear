@@ -176,24 +176,6 @@ h2 {
   width: 100%;
   margin-bottom: 4px;
 }
-.btn-surrender {
-  background: transparent;
-  border: 1px solid rgba(248, 113, 113, 0.5);
-  color: var(--out);
-  border-radius: 10px;
-  padding: 6px 16px;
-  font-size: .8rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all .2s ease;
-  letter-spacing: 0.02em;
-}
-.btn-surrender:hover {
-  background: rgba(248, 113, 113, 0.12);
-  border-color: var(--out);
-  box-shadow: 0 0 16px rgba(248, 113, 113, 0.2);
-}
 .btn-abort {
   background: transparent;
   border: 1px solid rgba(248, 113, 113, 0.35);
@@ -293,6 +275,109 @@ h2 {
   background: var(--out);
   border-color: var(--out);
   box-shadow: 0 0 8px var(--out-glow);
+}
+
+/* ── Scoreboard Tabs ── */
+.sb-tab-bar {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+.sb-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 8px 0;
+  font-size: .78rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--dim);
+  cursor: pointer;
+  transition: color .2s, border-color .2s;
+  letter-spacing: .04em;
+}
+.sb-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ── ScoreboardGrid ── */
+.sgrid-wrap {
+  padding: 4px 0;
+}
+.sgrid-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .82rem;
+}
+.sgrid-th-label {
+  width: 36px;
+}
+.sgrid-th-player {
+  text-align: center;
+  padding: 8px 4px 6px;
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--text-soft);
+  letter-spacing: .04em;
+}
+.sgrid-td-label {
+  text-align: center;
+  color: var(--dim);
+  font-size: .72rem;
+  font-weight: 600;
+  padding: 5px 2px;
+  width: 32px;
+}
+.sgrid-td-empty {
+  text-align: center;
+  color: rgba(255,255,255,0.12);
+  font-size: .8rem;
+  padding: 6px 4px;
+}
+.sgrid-td-cell {
+  text-align: center;
+  padding: 5px 4px;
+}
+.sgrid-cell-out  { background: rgba(248, 113, 113, 0.08); }
+.sgrid-cell-safe { background: rgba(52,  211, 153, 0.06); }
+.sgrid-row-current td { background: rgba(251, 191, 36, 0.07) !important; }
+.sgrid-row-current .sgrid-td-label { color: var(--warning); }
+.sgrid-pick {
+  font-size: .95rem;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  margin-right: 3px;
+}
+.sgrid-mark {
+  font-size: .75rem;
+  font-weight: 800;
+}
+.sgrid-cell-out  .sgrid-mark { color: var(--out); }
+.sgrid-cell-safe .sgrid-mark { color: var(--safe); }
+.sgrid-foot-row td {
+  border-top: 1px solid var(--border);
+}
+.sgrid-foot-label {
+  color: var(--dim);
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+}
+.sgrid-td-dots {
+  text-align: center;
+  padding: 6px 4px;
+}
+.sgrid-td-score {
+  text-align: center;
+  padding: 5px 4px;
+}
+.sgrid-score {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -.02em;
 }
 
 /* ── Lenge Grid ── */

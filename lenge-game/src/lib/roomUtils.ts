@@ -52,6 +52,7 @@ export async function createRoom(
     timerSeconds,
     timerStartedAt: null,
     readyFlags: [false, false],
+    aborted: false,
   };
 
   const { error } = await supabase.from('rooms').insert({

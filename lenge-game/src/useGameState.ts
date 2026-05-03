@@ -8,7 +8,8 @@ export type Action =
   | { type: 'CHOOSE'; n: number }
   | { type: 'CONTINUE' }
   | { type: 'RESET' }
-  | { type: 'SYNC_STATE'; state: GameState };
+  | { type: 'SYNC_STATE'; state: GameState }
+  | { type: 'PLAYER_READY'; playerIdx: 0 | 1 };
 
 const makePlayer = (name: string): Player => ({ name, score: 0, outCount: 0 });
 
@@ -29,6 +30,7 @@ export const initialGameState: GameState = {
   timerEnabled: false,
   timerSeconds: 30,
   timerStartedAt: null,
+  readyFlags: [false, false],
 };
 
 export function reducer(state: GameState, action: Action): GameState {
@@ -160,6 +162,20 @@ export function reducer(state: GameState, action: Action): GameState {
         outNumbers: new Set(),
         phase: 'SETTER_SETUP',
         timerStartedAt: state.timerEnabled ? new Date().toISOString() : null,
+      };
+    }
+
+    case 'PLAYER_READY': {
+      const newFlags: [boolean, boolean] = [...state.readyFlags] as [boolean, boolean];
+      newFlags[action.playerIdx] = true;
+      const bothReady = newFlags[0] && newFlags[1];
+      return {
+        ...state,
+        readyFlags: newFlags,
+        ...(bothReady && {
+          phase: 'SETTER_SETUP',
+          timerStartedAt: state.timerEnabled ? new Date().toISOString() : null,
+        }),
       };
     }
 

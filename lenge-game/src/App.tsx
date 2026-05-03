@@ -10,6 +10,7 @@ import { ResultScreen } from './components/ResultScreen';
 import { GameOverScreen } from './components/GameOverScreen';
 import { Scoreboard } from './components/Scoreboard';
 import { SpectatorScreen } from './components/SpectatorScreen';
+import { WaitingLobbyScreen } from './components/WaitingLobbyScreen';
 
 function GameRoomRoute() {
   const [searchParams] = useSearchParams();
@@ -55,7 +56,7 @@ function GameRoom() {
   const { phase, players, setterIdx, chooserIdx } = gameState;
   const amISetter = myIdx === setterIdx;
   const amIChooser = myIdx === chooserIdx;
-  const inGame = phase !== 'LOBBY';
+  const inGame = phase !== 'LOBBY' && phase !== 'WAITING_LOBBY';
 
   const handleAbort = () => {
     if (window.confirm('ゲームを中断してトップへ戻りますか？')) {
@@ -84,6 +85,15 @@ function GameRoom() {
 
       {phase === 'LOBBY' && (
         <LobbyScreen roomId={roomId!} p1name={players[0].name} />
+      )}
+
+      {phase === 'WAITING_LOBBY' && (
+        <WaitingLobbyScreen
+          players={players}
+          readyFlags={gameState.readyFlags}
+          myIdx={myIdx}
+          onReady={() => dispatch({ type: 'PLAYER_READY', playerIdx: myIdx })}
+        />
       )}
 
       {phase === 'SETTER_SETUP' && amISetter && (

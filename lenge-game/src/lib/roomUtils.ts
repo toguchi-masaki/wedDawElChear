@@ -15,6 +15,7 @@ export function deserialize(data: Record<string, unknown>): GameState {
     ...base,
     deactivated: new Set((data.deactivated as number[]) ?? []),
     outNumbers: new Set((data.outNumbers as number[]) ?? []),
+    readyFlags: (data.readyFlags as [boolean, boolean]) ?? [false, false],
   };
 }
 
@@ -50,6 +51,7 @@ export async function createRoom(
     timerEnabled,
     timerSeconds,
     timerStartedAt: null,
+    readyFlags: [false, false],
   };
 
   const { error } = await supabase.from('rooms').insert({
@@ -79,8 +81,9 @@ export async function joinRoom(roomId: string, p2name: string): Promise<void> {
   const token = crypto.randomUUID();
   const state = deserialize(data.game_state as Record<string, unknown>);
   state.players[1] = makePlayer(p2name);
-  state.phase = 'SETTER_SETUP';
-  state.timerStartedAt = state.timerEnabled ? new Date().toISOString() : null;
+  state.phase = 'WAITING_LOBBY';
+  state.readyFlags = [false, false];
+  state.timerStartedAt = null;
 
   const { error: updateError } = await supabase
     .from('rooms')

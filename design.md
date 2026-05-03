@@ -243,14 +243,16 @@ T5  12 💥 ±0
 
 ```
 App.tsx                     BrowserRouter・ルーティング（/ と /game/:roomId）
+├── GameRoomRoute           ?role=spectator を検出し GameRoom / SpectatorScreen を切替
 ├── StartScreen             スタート画面（名前入力・ルーム作成）
 ├── JoinScreen              参加画面（P2 が /game/:roomId を開いたとき）
-├── LobbyScreen             ロビー画面（QRコード・URL・P2入室待ち）
+├── LobbyScreen             ロビー画面（QRコード・URL・P2入室待ち / 観戦URL追加）
 ├── WaitingScreen           待機画面（相手のターン中に表示）
 ├── SetterSetupScreen       攻撃側設定画面
 ├── ChooserPickScreen       守備側選択画面
 ├── ResultScreen            結果画面
 ├── GameOverScreen          ゲーム終了画面
+├── SpectatorScreen         観戦画面（読み取り専用・観戦者数表示）
 ├── Scoreboard              スコアボード（テーブル形式、ゲーム中常時表示）
 └── LengeGrid               イスボタングリッド（共通 UI）
 ```
@@ -262,6 +264,13 @@ App.tsx                     BrowserRouter・ルーティング（/ と /game/:ro
 | `src/lib/supabase.ts` | Supabase クライアントシングルトン |
 | `src/lib/roomUtils.ts` | `createRoom` / `joinRoom` / `serialize` / `deserialize` |
 | `src/hooks/useRoom.ts` | Realtime サブスクリプション・楽観的 dispatch |
+
+### 8.2 新規追加ファイル（Phase 3）
+
+| ファイル | 役割 |
+|---------|------|
+| `src/hooks/useSpectatorRoom.ts` | 読み取り専用 Realtime + Supabase Presence で観戦者数集計 |
+| `src/components/SpectatorScreen.tsx` | 観戦専用UI（Scoreboard・LengeGrid・フェーズバナー・観戦者数） |
 
 ---
 
@@ -295,10 +304,10 @@ App.tsx                     BrowserRouter・ルーティング（/ と /game/:ro
 
 | Priority | Phase | 機能 | 状況 | 理由・依存関係 |
 |----------|-------|------|------|----------------|
-| 🔴 必須 | 2.0 | Vercelデプロイ準備 | ✅ 完了 | 以降の全機能の前提。URL共有・QR発行もデプロイ済み環境が必要 |
-| 🔴 必須 | 2.1 | Supabase Realtime 実装 | ✅ 実装完了（Supabase設定待ち） | マルチデバイス対戦の基盤。これなしでURL対戦は成立しない |
-| 🔴 必須 | 2.2 | 対戦URL・QRコード発行 | ✅ 実装完了（2.1と同時リリース） | Phase 2.1に依存。ゲームルームIDでURL生成、QRコードで招待 |
-| 🟡 重要 | 3.0 | 観戦機能・観戦URL/QR発行 | 📋 未着手 | Phase 2.2に依存。読み取り専用のゲーム状態ストリームを分岐 |
+| 🔴 必須 | 2.0 | Vercelデプロイ準備 | ✅ デプロイ完了 | 以降の全機能の前提。URL共有・QR発行もデプロイ済み環境が必要 |
+| 🔴 必須 | 2.1 | Supabase Realtime 実装 | ✅ デプロイ完了 | マルチデバイス対戦の基盤。これなしでURL対戦は成立しない |
+| 🔴 必須 | 2.2 | 対戦URL・QRコード発行 | ✅ デプロイ完了 | Phase 2.1に依存。ゲームルームIDでURL生成、QRコードで招待 |
+| 🟡 重要 | 3.0 | 観戦機能・観戦URL/QR発行 | ✅ 実装完了 | Phase 2.2に依存。読み取り専用のゲーム状態ストリームを分岐 |
 | 🟡 重要 | 3.1 | 思考時間制限機能 | 📋 未着手 | マルチデバイス化後に自然なニーズ。on/off + 秒数設定のオプション |
 | 🟢 随時 | 各Phase | UI修正 | 📋 未着手 | 各Phase完了後に対応。要件は実装後に定義 |
 
@@ -315,7 +324,7 @@ App.tsx                     BrowserRouter・ルーティング（/ と /game/:ro
 
 ---
 
-### Phase 2.1 — Supabase Realtime 実装　✅ 実装完了
+### Phase 2.1 — Supabase Realtime 実装　✅ デプロイ完了
 
 **目的:** 2台のデバイスが同一ゲーム状態をリアルタイムで共有する
 
@@ -360,7 +369,7 @@ alter publication supabase_realtime add table public.rooms;
 
 ---
 
-### Phase 2.2 — 対戦URL・QRコード発行　✅ 実装完了
+### Phase 2.2 — 対戦URL・QRコード発行　✅ デプロイ完了
 
 **目的:** URLを共有するだけで対戦を開始できるようにする
 
@@ -377,15 +386,26 @@ alter publication supabase_realtime add table public.rooms;
 
 ---
 
-### Phase 3.0 — 観戦機能
+### Phase 3.0 — 観戦機能　✅ 実装完了
 
 **目的:** 第三者がゲームの進行をリアルタイムで閲覧できる
 
 **要件:**
-- 観戦URL（`/game/[roomId]?role=spectator`）の発行・QRコード生成
-- 観戦者は操作不可の読み取り専用ビュー
-- 観戦者数の表示（任意）
-- 観戦者向けのUI（スコアボード・履歴ログを中心とした俯瞰レイアウト）
+- 観戦URL（`/game/[roomId]?role=spectator`）の発行・QRコード生成 ✅
+- 観戦者は操作不可の読み取り専用ビュー ✅
+- 観戦者数の表示（Supabase Presence） ✅
+- 観戦者向けのUI（スコアボード・履歴ログを中心とした俯瞰レイアウト） ✅
+
+**実装内容:**
+
+| 項目 | 実装詳細 |
+|------|---------|
+| ルーティング | `/game/:roomId?role=spectator` で `SpectatorScreen` を表示 |
+| 状態同期 | `useSpectatorRoom` フック（dispatch なし・読み取り専用） |
+| 観戦者数 | Supabase Presence (`spectators_${roomId}` チャンネル) でリアルタイム集計 |
+| 観戦URL発行 | `LobbyScreen` に折りたたみセクションとして観戦QR/URLを追加 |
+| 盤面表示 | `LengeGrid`（操作不可）+ フェーズバナー |
+| 情報開示 | 観戦者には `outNumbers`（攻撃側設定）を含む全情報を表示。不正なし前提 |
 
 ---
 

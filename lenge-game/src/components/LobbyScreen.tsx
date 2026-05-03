@@ -6,16 +6,43 @@ interface Props {
   p1name: string;
 }
 
-export function LobbyScreen({ roomId, p1name }: Props) {
-  const gameUrl = `${window.location.origin}/game/${roomId}`;
+function CopyableUrl({ url, label }: { url: string; label: string }) {
   const [copied, setCopied] = useState(false);
-
   const handleCopy = () => {
-    navigator.clipboard.writeText(gameUrl).then(() => {
+    navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
   };
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%' }}>
+      <QRCodeSVG value={url} size={160} />
+      <p className="sub" style={{ textAlign: 'center' }}>{label}</p>
+      <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+        <input
+          readOnly
+          value={url}
+          style={{
+            flex: 1,
+            fontSize: '0.72rem',
+            padding: '8px 10px',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border)',
+            borderRadius: 8,
+            color: 'var(--text)',
+          }}
+        />
+        <button className="btn btn-secondary" onClick={handleCopy}>
+          {copied ? '✓' : 'コピー'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function LobbyScreen({ roomId, p1name }: Props) {
+  const gameUrl = `${window.location.origin}/game/${roomId}`;
+  const spectatorUrl = `${window.location.origin}/game/${roomId}?role=spectator`;
 
   return (
     <div className="screen active">
@@ -25,28 +52,18 @@ export function LobbyScreen({ roomId, p1name }: Props) {
       </div>
 
       <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-        <QRCodeSVG value={gameUrl} size={180} />
-        <p className="sub" style={{ textAlign: 'center' }}>QRコードまたはURLを対戦相手に共有してください</p>
-        <div style={{ display: 'flex', gap: 8, width: '100%' }}>
-          <input
-            readOnly
-            value={gameUrl}
-            style={{
-              flex: 1,
-              fontSize: '0.72rem',
-              padding: '8px 10px',
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border)',
-              borderRadius: 8,
-              color: 'var(--text)',
-            }}
-          />
-          <button className="btn btn-secondary" onClick={handleCopy}>
-            {copied ? '✓' : 'コピー'}
-          </button>
-        </div>
+        <CopyableUrl url={gameUrl} label="QRコードまたはURLを対戦相手に共有してください" />
         <p className="sub">ルームID: <strong>{roomId}</strong></p>
       </div>
+
+      <details className="card spectator-invite">
+        <summary style={{ cursor: 'pointer', userSelect: 'none' }}>
+          <span className="sub">👁 観戦URLを共有する</span>
+        </summary>
+        <div style={{ marginTop: 16 }}>
+          <CopyableUrl url={spectatorUrl} label="観戦者にこのURLまたはQRコードを共有してください" />
+        </div>
+      </details>
 
       <div className="card" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
         <div className="spinner" />

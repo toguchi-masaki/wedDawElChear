@@ -1,12 +1,26 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createRoom } from '../lib/roomUtils';
 
-interface Props {
-  onStart: (p1: string, p2: string) => void;
-}
+export function StartScreen() {
+  const nameRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-export function StartScreen({ onStart }: Props) {
-  const p1Ref = useRef<HTMLInputElement>(null);
-  const p2Ref = useRef<HTMLInputElement>(null);
+  const handleCreate = async () => {
+    const name = nameRef.current?.value.trim() || 'Player 1';
+    setLoading(true);
+    setError(null);
+    try {
+      const roomId = await createRoom(name);
+      navigate(`/game/${roomId}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'ルームの作成に失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="screen active">
@@ -17,13 +31,10 @@ export function StartScreen({ onStart }: Props) {
 
       <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div className="field">
-          <label>先攻プレイヤー</label>
-          <input ref={p1Ref} type="text" defaultValue="Player 1" placeholder="Player 1" />
+          <label>あなたの名前</label>
+          <input ref={nameRef} type="text" defaultValue="Player 1" placeholder="Player 1" autoFocus />
         </div>
-        <div className="field">
-          <label>後攻プレイヤー</label>
-          <input ref={p2Ref} type="text" defaultValue="Player 2" placeholder="Player 2" />
-        </div>
+        {error && <p style={{ color: 'var(--out)', fontSize: '0.85rem' }}>{error}</p>}
       </div>
 
       <div className="card">
@@ -52,12 +63,10 @@ export function StartScreen({ onStart }: Props) {
 
       <button
         className="btn btn-primary btn-full"
-        onClick={() => onStart(
-          p1Ref.current?.value.trim() || 'Player 1',
-          p2Ref.current?.value.trim() || 'Player 2',
-        )}
+        disabled={loading}
+        onClick={handleCreate}
       >
-        ゲームスタート
+        {loading ? 'ルームを作成中...' : 'ゲームを作成'}
       </button>
     </div>
   );

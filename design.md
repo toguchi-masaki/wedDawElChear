@@ -87,15 +87,16 @@
 ### 4.3 フェーズ遷移（Phase）
 
 ```
-START
- └─▶ SETTER_PRIVATE（攻撃側へのデバイス受け渡し）
-      └─▶ SETTER_SETUP（アウト設定）
-           └─▶ CHOOSER_PRIVATE（守備側へのデバイス受け渡し）
-                └─▶ CHOOSER_PICK（イス選択）
-                     └─▶ RESULT（結果表示）
-                          ├─▶ GAME_OVER（ゲーム終了）
-                          └─▶ SETTER_PRIVATE（次サイクル）
+START（トップ画面 /）
+ └─▶ LOBBY（ルーム作成後 /game/:roomId — P2入室待ち）
+      └─▶ SETTER_SETUP（攻撃側設定 / 守備側は WaitingScreen）
+           └─▶ CHOOSER_PICK（守備側選択 / 攻撃側は WaitingScreen）
+                └─▶ RESULT（両デバイスで結果表示）
+                     ├─▶ GAME_OVER（ゲーム終了）
+                     └─▶ SETTER_SETUP（次サイクル・ロール交代）
 ```
+
+> **Phase 2.1 変更点:** `SETTER_PRIVATE` / `CHOOSER_PRIVATE`（1デバイス受け渡し画面）を廃止し、`LOBBY` を追加。マルチデバイス化により各プレイヤーが自分のデバイスで操作する。
 
 ---
 
@@ -176,15 +177,18 @@ leading   = max(player[0].score, player[1].score) 側プレイヤー
 
 ### 7.1 画面一覧
 
-| 画面 | フェーズ | 表示対象 | 説明 |
-|------|----------|----------|------|
-| スタート画面 | `START` | 両プレイヤー | プレイヤー名入力・ルール確認 |
-| 攻撃側受け渡し | `SETTER_PRIVATE` | 第三者 | デバイスを攻撃側に渡すよう促す |
-| 攻撃側設定画面 | `SETTER_SETUP` | 攻撃側のみ | アウトにするイス番号を1つタップ選択 |
-| 守備側受け渡し | `CHOOSER_PRIVATE` | 第三者 | デバイスを守備側に渡すよう促す |
-| 守備側選択画面 | `CHOOSER_PICK` | 守備側のみ | アクティブなイスから 1 つ選び、選択確定ボタンで確認 |
+| 画面 | フェーズ / 条件 | 表示対象 | 説明 |
+|------|----------------|----------|------|
+| スタート画面 | `/`（ルーム未作成） | P1 | 名前入力・ルール確認・ルーム作成ボタン |
+| 参加画面 | `/game/:roomId`（未参加の端末） | P2 | 名前入力・参加ボタン |
+| ロビー画面 | `LOBBY` | P1 | QRコード・URL表示・P2入室待ち |
+| 攻撃側設定画面 | `SETTER_SETUP`（自分が攻撃側） | 攻撃側のみ | アウトにするイス番号を1つタップ選択 |
+| 待機画面 | `SETTER_SETUP`（自分が守備側） / `CHOOSER_PICK`（自分が攻撃側） | 待機中プレイヤー | スピナー＋「相手が操作中」メッセージ |
+| 守備側選択画面 | `CHOOSER_PICK`（自分が守備側） | 守備側のみ | アクティブなイスから 1 つ選び、選択確定ボタンで確認 |
 | 結果画面 | `RESULT` | 両プレイヤー | アウト / セーフの結果・スコア更新表示 |
 | ゲーム終了画面 | `GAME_OVER` | 両プレイヤー | 勝者・勝因の表示 |
+
+> **廃止:** `SETTER_PRIVATE`（攻撃側受け渡し）・`CHOOSER_PRIVATE`（守備側受け渡し）はマルチデバイス化により不要となり削除。
 
 ### 7.2 スコアボード表示項目
 
@@ -238,32 +242,204 @@ T5  12 💥 ±0
 ## 8. コンポーネント構成
 
 ```
-App.tsx                     フェーズ切り替えルーティング・常時スコアボード・中断ボタン
-├── StartScreen             スタート画面
-├── PrivateHandoff          受け渡し画面（攻撃側 / 守備側 共通）
+App.tsx                     BrowserRouter・ルーティング（/ と /game/:roomId）
+├── StartScreen             スタート画面（名前入力・ルーム作成）
+├── JoinScreen              参加画面（P2 が /game/:roomId を開いたとき）
+├── LobbyScreen             ロビー画面（QRコード・URL・P2入室待ち）
+├── WaitingScreen           待機画面（相手のターン中に表示）
 ├── SetterSetupScreen       攻撃側設定画面
 ├── ChooserPickScreen       守備側選択画面
 ├── ResultScreen            結果画面
 ├── GameOverScreen          ゲーム終了画面
-├── Scoreboard              スコアボード（テーブル形式、全画面常時表示）
+├── Scoreboard              スコアボード（テーブル形式、ゲーム中常時表示）
 └── LengeGrid               イスボタングリッド（共通 UI）
 ```
+
+### 8.1 新規追加ファイル（Phase 2）
+
+| ファイル | 役割 |
+|---------|------|
+| `src/lib/supabase.ts` | Supabase クライアントシングルトン |
+| `src/lib/roomUtils.ts` | `createRoom` / `joinRoom` / `serialize` / `deserialize` |
+| `src/hooks/useRoom.ts` | Realtime サブスクリプション・楽観的 dispatch |
 
 ---
 
 ## 9. 状態管理
 
 - `useReducer` による単一ストアで全ゲーム状態を管理
-- Action 一覧:
+- Phase 2 以降は `useRoom` フックが Supabase と双方向同期を担う
+  - dispatch → reducer でローカル更新（楽観的） → Supabase DB 書き込み
+  - Supabase Realtime → `setGameState` で相手端末の変更を受信
+
+### 9.1 Action 一覧
 
 | Action | 発火タイミング |
 |--------|----------------|
-| `START_GAME` | スタート画面でゲーム開始ボタン押下 |
-| `SHOW_SETTER_SETUP` | 攻撃側受け渡し画面で準備完了押下 |
 | `SELECT_OUT` | 攻撃側設定画面でイス番号をタップ（1つのみ選択・再タップで解除） |
 | `SETTER_DONE` | 攻撃側設定完了ボタン押下 |
-| `SHOW_CHOOSER_PICK` | 守備側受け渡し画面で準備完了押下 |
 | `CHOOSE` | 守備側選択画面でイス番号をタップ |
 | `CONTINUE` | 結果画面で次のターンへボタン押下 |
 | `RESET` | ゲーム終了画面でもう一度プレイボタン押下 |
-| `ABORT` | ゲーム中断ボタン押下（確認後にスタート画面へ戻る） |
+| `SYNC_STATE` | Supabase Realtime から状態変更を受信したとき（内部） |
+
+> **廃止:** `START_GAME` / `SHOW_SETTER_SETUP` / `SHOW_CHOOSER_PICK` / `ABORT` はマルチデバイス化に伴い削除。ルーム作成・参加・中断はルーティングで処理する。
+
+---
+
+## 10. Phase 2 以降のロードマップ
+
+現状（Phase 1）は1デバイスをパス回しする形式。Phase 2以降は**マルチデバイス化**を軸に機能を拡張する。
+
+### 優先度マトリクス
+
+| Priority | Phase | 機能 | 状況 | 理由・依存関係 |
+|----------|-------|------|------|----------------|
+| 🔴 必須 | 2.0 | Vercelデプロイ準備 | ✅ 完了 | 以降の全機能の前提。URL共有・QR発行もデプロイ済み環境が必要 |
+| 🔴 必須 | 2.1 | Supabase Realtime 実装 | ✅ 実装完了（Supabase設定待ち） | マルチデバイス対戦の基盤。これなしでURL対戦は成立しない |
+| 🔴 必須 | 2.2 | 対戦URL・QRコード発行 | ✅ 実装完了（2.1と同時リリース） | Phase 2.1に依存。ゲームルームIDでURL生成、QRコードで招待 |
+| 🟡 重要 | 3.0 | 観戦機能・観戦URL/QR発行 | 📋 未着手 | Phase 2.2に依存。読み取り専用のゲーム状態ストリームを分岐 |
+| 🟡 重要 | 3.1 | 思考時間制限機能 | 📋 未着手 | マルチデバイス化後に自然なニーズ。on/off + 秒数設定のオプション |
+| 🟢 随時 | 各Phase | UI修正 | 📋 未着手 | 各Phase完了後に対応。要件は実装後に定義 |
+
+---
+
+### Phase 2.0 — Vercelデプロイ準備
+
+**目的:** 本番環境の整備とURL共有の前提構築
+
+**要件:**
+- `vercel.json` または Next.js / Vite の設定調整
+- 環境変数管理（Supabase接続情報など）
+- ビルド・プレビューデプロイの確認
+
+---
+
+### Phase 2.1 — Supabase Realtime 実装　✅ 実装完了
+
+**目的:** 2台のデバイスが同一ゲーム状態をリアルタイムで共有する
+
+**実装内容:**
+
+| 項目 | 実装詳細 |
+|------|---------|
+| DB テーブル | `rooms`（id, game_state JSONB, player1_token, player2_token, created_at, expires_at） |
+| シリアライズ | `Set<number>` ↔ `number[]` を `serialize` / `deserialize` で変換（`src/lib/roomUtils.ts`） |
+| Realtime | `supabase.channel().on('postgres_changes', UPDATE)` で `game_state` 変更を購読 |
+| 同期モデル | 楽観的更新（ローカル即時 → Supabase 書き込み → Realtime で相手端末に伝播） |
+| プレイヤー識別 | ルーム参加時に `crypto.randomUUID()` でトークン生成 → `localStorage` に保存 |
+| フェーズ廃止 | `SETTER_PRIVATE` / `CHOOSER_PRIVATE` を削除し `LOBBY` を追加 |
+
+**Supabase セットアップ（要実行）:**
+
+```sql
+create table public.rooms (
+  id text primary key,
+  game_state jsonb not null,
+  player1_token text not null,
+  player2_token text,
+  created_at timestamptz default now() not null,
+  expires_at timestamptz default (now() + interval '6 hours') not null
+);
+alter table public.rooms enable row level security;
+create policy "rooms_select" on public.rooms for select using (true);
+create policy "rooms_insert" on public.rooms for insert with check (true);
+create policy "rooms_update" on public.rooms for update using (true);
+alter publication supabase_realtime add table public.rooms;
+```
+
+**Vercel 環境変数（要設定）:**
+
+| 変数名 | 用途 |
+|--------|------|
+| `VITE_SUPABASE_URL` | Supabase プロジェクト URL |
+| `VITE_SUPABASE_ANON_KEY` | anon/public キー（クライアント専用） |
+
+**既知の制約:**
+- `outNumbers`（攻撃側の選択）は `game_state` に含まれるため、守備側が直接 Supabase API を叩けば参照可能。カジュアルゲームとして許容し、Phase 3 以降で Edge Functions による分離を検討する。
+
+---
+
+### Phase 2.2 — 対戦URL・QRコード発行　✅ 実装完了
+
+**目的:** URLを共有するだけで対戦を開始できるようにする
+
+**実装内容:**
+
+| 項目 | 実装詳細 |
+|------|---------|
+| roomId 生成 | 6文字英数字（紛らわしい文字 I/O/0/1 を除外）`generateRoomId()` |
+| ルーティング | `react-router-dom` で `/` と `/game/:roomId` を分岐 |
+| 招待URL | `${window.location.origin}/game/${roomId}` をクリップボードコピー可能 |
+| QRコード | `qrcode.react` の `QRCodeSVG` で 180px 表示（`LobbyScreen`） |
+| 入室待機 | P2 参加後 Realtime 経由で P1 も自動的に `SETTER_SETUP` へ遷移 |
+| 有効期限 | ルーム作成から 6 時間（`expires_at` カラム）。クリーンアップは未実装（要 Supabase Cron / Edge Function） |
+
+---
+
+### Phase 3.0 — 観戦機能
+
+**目的:** 第三者がゲームの進行をリアルタイムで閲覧できる
+
+**要件:**
+- 観戦URL（`/game/[roomId]?role=spectator`）の発行・QRコード生成
+- 観戦者は操作不可の読み取り専用ビュー
+- 観戦者数の表示（任意）
+- 観戦者向けのUI（スコアボード・履歴ログを中心とした俯瞰レイアウト）
+
+---
+
+### Phase 3.1 — 思考時間制限機能
+
+**目的:** 各サイクルの意思決定に時間制限を設け緊張感を加える
+
+**要件:**
+- ゲーム開始前の設定: on/off トグル + 制限秒数の選択（例: 10 / 20 / 30 / 60秒）
+- タイマーの適用対象: `SETTER_SETUP`（アウト設定）と `CHOOSER_PICK`（イス選択）の両フェーズ
+- タイムアップ時の処理: ランダム選択 or 自動で最小イスを選択（要検討）
+- タイマー表示UI（プログレスバー or カウントダウン数字）
+- マルチデバイス時: タイマーはサーバー側で管理し全端末に同期
+
+---
+
+### UI修正（各Phase随時）
+
+各Phaseの実装完了後にレイアウト・導線を見直す。要件は実装後に定義する。
+
+---
+
+## 11. セキュリティ方針（Phase 2 以降 共通）
+
+Phase 2 以降のすべての実装において、以下のセキュリティ方針を横断的に適用する。
+
+---
+
+### 11.1 環境変数・機密情報の管理
+
+| 項目 | 方針 |
+|------|------|
+| APIキー・パスワード | ソースコード・リポジトリへのハードコード禁止。`.env.local` 等の環境変数ファイルで管理する |
+| `.env` ファイルの除外 | `.gitignore` に `.env*`（`.env.local`, `.env.production` 等）を必ず追加する |
+| Vercel 環境変数 | 本番・プレビュー・開発の各環境ごとに Vercel ダッシュボードで設定し、コード内に値を持たない |
+| Supabase キーの分離 | `NEXT_PUBLIC_SUPABASE_ANON_KEY`（公開可）はクライアント用途のみ。`SUPABASE_SERVICE_ROLE_KEY`（非公開）はサーバーサイド専用とし、クライアントバンドルに含めない |
+
+---
+
+### 11.2 公開範囲の制御・通信の暗号化
+
+| 項目 | 方針 |
+|------|------|
+| HTTPS | Vercel デプロイにより本番通信は常時 HTTPS。HTTP アクセスは HTTPS へリダイレクトする（Vercel デフォルト設定で有効） |
+| デバッグモード | `NODE_ENV=production` 環境ではデバッグログ・エラー詳細を非表示にする。`console.log` のデバッグ出力は本番ビルドから除去する |
+| 不要なファイルの除外 | `.gitignore` および Vercel のデプロイ設定で、開発用設定ファイル・テストデータ・シークレットファイルをリポジトリ・デプロイ成果物から除外する |
+| Supabase RLS | 全テーブルで Row Level Security を有効化し、認証済みユーザーが自身に関連するデータのみ操作できるよう制限する（Phase 2.1 参照） |
+
+---
+
+### 11.3 依存ライブラリの脆弱性管理
+
+| 項目 | 方針 |
+|------|------|
+| 定期的な脆弱性チェック | `npm audit` を各 Phase の実装完了時に実行し、High / Critical の脆弱性がないことを確認してからリリースする |
+| 自動検出 | GitHub の Dependabot アラートを有効化し、既知の脆弱性が検出された場合に通知を受け取る |
+| ライブラリ選定基準 | 新規ライブラリの追加時は、メンテナンス状況（最終更新日・Issue 対応状況）と npm audit の結果を確認する |

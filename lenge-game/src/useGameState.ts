@@ -2,20 +2,17 @@ import { useReducer } from 'react';
 import type { GameState, Player } from './types';
 import { WIN_SCORE, MAX_OUTS, MAX_TURNS, LENGE_COUNT } from './types';
 
-type Action =
-  | { type: 'START_GAME'; p1name: string; p2name: string }
-  | { type: 'SHOW_SETTER_SETUP' }
+export type Action =
   | { type: 'SELECT_OUT'; n: number }
   | { type: 'SETTER_DONE' }
-  | { type: 'SHOW_CHOOSER_PICK' }
   | { type: 'CHOOSE'; n: number }
   | { type: 'CONTINUE' }
   | { type: 'RESET' }
-  | { type: 'ABORT' };
+  | { type: 'SYNC_STATE'; state: GameState };
 
 const makePlayer = (name: string): Player => ({ name, score: 0, outCount: 0 });
 
-const initial: GameState = {
+export const initialGameState: GameState = {
   phase: 'START',
   players: [makePlayer('Player 1'), makePlayer('Player 2')],
   setterIdx: 0,
@@ -31,26 +28,10 @@ const initial: GameState = {
   winReason: '',
 };
 
-function reducer(state: GameState, action: Action): GameState {
+export function reducer(state: GameState, action: Action): GameState {
   switch (action.type) {
-    case 'START_GAME': {
-      const players: [Player, Player] = [
-        makePlayer(action.p1name || 'Player 1'),
-        makePlayer(action.p2name || 'Player 2'),
-      ];
-      return {
-        ...initial,
-        players,
-        turn: 1,
-        history: [],
-        phase: 'SETTER_PRIVATE',
-        outNumbers: new Set(),
-        deactivated: new Set(),
-      };
-    }
-
-    case 'SHOW_SETTER_SETUP':
-      return { ...state, phase: 'SETTER_SETUP', outNumbers: new Set() };
+    case 'SYNC_STATE':
+      return action.state;
 
     case 'SELECT_OUT': {
       const next = new Set(state.outNumbers);
@@ -63,13 +44,7 @@ function reducer(state: GameState, action: Action): GameState {
       return { ...state, outNumbers: next };
     }
 
-    case 'ABORT':
-      return { ...initial };
-
     case 'SETTER_DONE':
-      return { ...state, phase: 'CHOOSER_PRIVATE' };
-
-    case 'SHOW_CHOOSER_PICK':
       return { ...state, phase: 'CHOOSER_PICK' };
 
     case 'CHOOSE': {
@@ -176,12 +151,12 @@ function reducer(state: GameState, action: Action): GameState {
         chooserIdx: state.setterIdx,
         turn: state.turn + 1,
         outNumbers: new Set(),
-        phase: 'SETTER_PRIVATE',
+        phase: 'SETTER_SETUP',
       };
     }
 
     case 'RESET':
-      return { ...initial, players: [makePlayer('Player 1'), makePlayer('Player 2')] };
+      return { ...initialGameState };
 
     default:
       return state;
@@ -189,6 +164,6 @@ function reducer(state: GameState, action: Action): GameState {
 }
 
 export function useGameState() {
-  const [state, dispatch] = useReducer(reducer, initial);
+  const [state, dispatch] = useReducer(reducer, initialGameState);
   return { state, dispatch };
 }

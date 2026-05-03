@@ -1,27 +1,64 @@
-import { useGameState } from './useGameState';
+import { BrowserRouter, Routes, Route, useParams, useNavigate } from 'react-router-dom';
+import { useRoom } from './hooks/useRoom';
 import { StartScreen } from './components/StartScreen';
-import { PrivateHandoff } from './components/PrivateHandoff';
+import { JoinScreen } from './components/JoinScreen';
+import { LobbyScreen } from './components/LobbyScreen';
+import { WaitingScreen } from './components/WaitingScreen';
 import { SetterSetupScreen } from './components/SetterSetupScreen';
 import { ChooserPickScreen } from './components/ChooserPickScreen';
 import { ResultScreen } from './components/ResultScreen';
 import { GameOverScreen } from './components/GameOverScreen';
 import { Scoreboard } from './components/Scoreboard';
 
-export default function App() {
-  const { state, dispatch } = useGameState();
-  const setter = state.players[state.setterIdx];
-  const chooser = state.players[state.chooserIdx];
-  const inGame = state.phase !== 'START';
+function GameRoom() {
+  const { roomId } = useParams<{ roomId: string }>();
+  const navigate = useNavigate();
+  const { gameState, dispatch, myIdx, isLoading, error } = useRoom(roomId!);
+
+  if (isLoading) {
+    return (
+      <main>
+        <div className="screen active" style={{ justifyContent: 'center', alignItems: 'center', gap: 16 }}>
+          <div className="spinner" />
+          <p className="hint">読み込み中...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main>
+        <div className="screen active" style={{ justifyContent: 'center', alignItems: 'center', gap: 16 }}>
+          <p style={{ color: 'var(--out)' }}>{error}</p>
+          <button className="btn btn-secondary" onClick={() => navigate('/')}>トップへ戻る</button>
+        </div>
+      </main>
+    );
+  }
+
+  if (myIdx === null) {
+    return (
+      <main>
+        <JoinScreen roomId={roomId!} onJoined={() => window.location.reload()} />
+      </main>
+    );
+  }
+
+  const { phase, players, setterIdx, chooserIdx } = gameState;
+  const amISetter = myIdx === setterIdx;
+  const amIChooser = myIdx === chooserIdx;
+  const inGame = phase !== 'LOBBY';
 
   const handleAbort = () => {
-    if (window.confirm('ゲームを中断してスタート画面に戻りますか？')) {
-      dispatch({ type: 'ABORT' });
+    if (window.confirm('ゲームを中断してトップへ戻りますか？')) {
+      navigate('/');
     }
   };
 
   return (
     <main>
-      {inGame && (
+      {inGame && phase !== 'GAME_OVER' && (
         <div className="game-header">
           <button className="btn btn-abort" onClick={handleAbort}>中断</button>
         </div>
@@ -29,69 +66,72 @@ export default function App() {
 
       {inGame && (
         <Scoreboard
-          players={state.players}
-          setterIdx={state.setterIdx}
-          chooserIdx={state.chooserIdx}
-          turn={state.turn}
-          deactivated={state.deactivated}
-          history={state.history}
+          players={players}
+          setterIdx={setterIdx}
+          chooserIdx={chooserIdx}
+          turn={gameState.turn}
+          deactivated={gameState.deactivated}
+          history={gameState.history}
         />
       )}
 
-      {state.phase === 'START' && (
-        <StartScreen
-          onStart={(p1, p2) => dispatch({ type: 'START_GAME', p1name: p1, p2name: p2 })}
-        />
+      {phase === 'LOBBY' && (
+        <LobbyScreen roomId={roomId!} p1name={players[0].name} />
       )}
 
-      {state.phase === 'SETTER_PRIVATE' && (
-        <div className="screen active">
-          <PrivateHandoff
-            role="setter"
-            playerName={setter.name}
-            onReady={() => dispatch({ type: 'SHOW_SETTER_SETUP' })}
-          />
-        </div>
-      )}
-
-      {state.phase === 'SETTER_SETUP' && (
+      {phase === 'SETTER_SETUP' && amISetter && (
         <SetterSetupScreen
-          state={state}
+          state={gameState}
           onToggleOut={(n) => dispatch({ type: 'SELECT_OUT', n })}
           onDone={() => dispatch({ type: 'SETTER_DONE' })}
         />
       )}
 
-      {state.phase === 'CHOOSER_PRIVATE' && (
-        <div className="screen active">
-          <PrivateHandoff
-            role="chooser"
-            playerName={chooser.name}
-            onReady={() => dispatch({ type: 'SHOW_CHOOSER_PICK' })}
-          />
-        </div>
+      {phase === 'SETTER_SETUP' && !amISetter && (
+        <WaitingScreen
+          message="相手がアウト番号を設定中..."
+          playerName={players[myIdx].name}
+        />
       )}
 
-      {state.phase === 'CHOOSER_PICK' && (
+      {phase === 'CHOOSER_PICK' && amIChooser && (
         <ChooserPickScreen
-          state={state}
+          state={gameState}
           onChoose={(n) => dispatch({ type: 'CHOOSE', n })}
         />
       )}
 
-      {state.phase === 'RESULT' && (
+      {phase === 'CHOOSER_PICK' && !amIChooser && (
+        <WaitingScreen
+          message="相手がイスを選択中..."
+          playerName={players[myIdx].name}
+        />
+      )}
+
+      {phase === 'RESULT' && (
         <ResultScreen
-          state={state}
+          state={gameState}
           onContinue={() => dispatch({ type: 'CONTINUE' })}
         />
       )}
 
-      {state.phase === 'GAME_OVER' && (
+      {phase === 'GAME_OVER' && (
         <GameOverScreen
-          state={state}
-          onReset={() => dispatch({ type: 'RESET' })}
+          state={gameState}
+          onReset={() => navigate('/')}
         />
       )}
     </main>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<main><StartScreen /></main>} />
+        <Route path="/game/:roomId" element={<GameRoom />} />
+      </Routes>
+    </BrowserRouter>
   );
 }

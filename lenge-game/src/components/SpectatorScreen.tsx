@@ -39,7 +39,7 @@ export function SpectatorScreen() {
     );
   }
 
-  const { phase, players, setterIdx, chooserIdx, deactivated, history, lastPick, lastIsOut, winnerIdx, winReason } = gameState;
+  const { phase, players, setterIdx, chooserIdx, deactivated, history, lastPick, lastIsOut, winnerIdx, winReason, gameOver } = gameState;
   const inGame = phase !== 'LOBBY';
 
   return (
@@ -49,6 +49,15 @@ export function SpectatorScreen() {
         {spectatorCount > 0 && (
           <span className="spectator-count">{spectatorCount}人が観戦中</span>
         )}
+        <button
+          className="btn btn-abort"
+          style={{ marginLeft: 'auto' }}
+          onClick={() => {
+            if (window.confirm('観戦を終了しますか？')) navigate('/');
+          }}
+        >
+          観戦を終了
+        </button>
       </div>
 
       {inGame && (
@@ -59,6 +68,7 @@ export function SpectatorScreen() {
           turn={gameState.turn}
           deactivated={deactivated}
           history={history}
+          gameOver={gameOver}
         />
       )}
 

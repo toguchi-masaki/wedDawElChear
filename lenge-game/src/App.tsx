@@ -125,6 +125,7 @@ function GameRoom() {
           turn={gameState.turn}
           deactivated={gameState.deactivated}
           history={gameState.history}
+          gameOver={gameState.gameOver}
         />
       )}
 

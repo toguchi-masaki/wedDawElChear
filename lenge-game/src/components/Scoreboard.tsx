@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import type { TurnRecord, Player } from '../types';
 import { MAX_OUTS, WIN_SCORE, LENGE_COUNT } from '../types';
+import { ScoreboardGrid } from './ScoreboardGrid';
 
-const DISPLAY_MAX_TURNS = 8; // 先攻後攻1セット = 1ターン
+const DISPLAY_MAX_TURNS = 8;
 
 interface Props {
   players: [Player, Player];
@@ -10,9 +12,12 @@ interface Props {
   turn: number;
   deactivated: Set<number>;
   history: TurnRecord[];
+  gameOver?: boolean;
 }
 
-export function Scoreboard({ players, setterIdx, chooserIdx, turn, deactivated, history }: Props) {
+export function Scoreboard({ players, setterIdx, chooserIdx, turn, deactivated, history, gameOver = false }: Props) {
+  const [tab, setTab] = useState<'detail' | 'grid'>('detail');
+
   const remainingSum = Array.from({ length: LENGE_COUNT }, (_, i) => i + 1)
     .filter((i) => !deactivated.has(i))
     .reduce((a, b) => a + b, 0);
@@ -26,73 +31,91 @@ export function Scoreboard({ players, setterIdx, chooserIdx, turn, deactivated, 
 
   return (
     <div className="scoreboard-wrap">
-      <table className="scoreboard-table">
-        <thead>
-          <tr>
-            <th className="sb-label-col"></th>
-            {players.map((p, i) => (
-              <th key={i} className={i === chooserIdx ? 'sb-chooser' : i === setterIdx ? 'sb-setter' : ''}>
-                <div className="sb-name">{p.name}</div>
-                <div>
-                  {i === chooserIdx && <span className="badge badge-chooser">守備</span>}
-                  {i === setterIdx && <span className="badge badge-setter">攻撃</span>}
-                </div>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td className="sb-label">スコア</td>
-            {players.map((p, i) => (
-              <td key={i} className="sb-score-cell">
-                <span className="sb-score">{p.score}</span>
-                <div className="sb-bar-wrap">
-                  <div className="sb-bar" style={{ width: `${Math.min(100, (p.score / WIN_SCORE) * 100)}%` }} />
-                </div>
-              </td>
-            ))}
-          </tr>
-          <tr>
-            <td className="sb-label">アウト</td>
-            {players.map((p, i) => (
-              <td key={i} className="sb-dots-cell">
-                <div className="pc-dots">{outDots(p.outCount)}</div>
-              </td>
-            ))}
-          </tr>
-          <tr>
-            <td className="sb-label">ターン</td>
-            <td colSpan={2} className="sb-meta-cell">
-              {displayTurn} / {DISPLAY_MAX_TURNS}　残りイス合計: {remainingSum}
-            </td>
-          </tr>
-          {history.length > 0 && (
+      <div className="sb-tab-bar">
+        <button className={`sb-tab ${tab === 'detail' ? 'active' : ''}`} onClick={() => setTab('detail')}>詳細</button>
+        <button className={`sb-tab ${tab === 'grid' ? 'active' : ''}`} onClick={() => setTab('grid')}>盤面</button>
+      </div>
+
+      {tab === 'detail' && (
+        <table className="scoreboard-table">
+          <thead>
             <tr>
-              <td className="sb-label">履歴</td>
-              {players.map((_, i) => {
-                const rows = history.filter((r) => r.playerIdx === i);
-                return (
-                  <td key={i} className="sb-history-cell">
-                    {rows.length === 0 ? (
-                      <span className="sb-no-history">—</span>
-                    ) : (
-                      rows.map((r) => (
-                        <div key={r.turn} className="sb-hist-row">
-                          <span className="sh-turn">T{Math.ceil(r.turn / 2)}</span>
-                          <span className="sh-pick">{r.pick}</span>
-                          <span className="sh-icon">{r.isOut ? '💥' : '✅'}</span>
-                          <span className="sh-delta">{r.isOut ? '±0' : `+${r.scoreDelta}`}</span>
-                        </div>
-                      ))
-                    )}
-                  </td>
-                );
-              })}
+              <th className="sb-label-col"></th>
+              {players.map((p, i) => (
+                <th key={i} className={i === chooserIdx ? 'sb-chooser' : i === setterIdx ? 'sb-setter' : ''}>
+                  <div className="sb-name">{p.name}</div>
+                  <div>
+                    {i === chooserIdx && <span className="badge badge-chooser">守備</span>}
+                    {i === setterIdx && <span className="badge badge-setter">攻撃</span>}
+                  </div>
+                </th>
+              ))}
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="sb-label">スコア</td>
+              {players.map((p, i) => (
+                <td key={i} className="sb-score-cell">
+                  <span className="sb-score">{p.score}</span>
+                  <div className="sb-bar-wrap">
+                    <div className="sb-bar" style={{ width: `${Math.min(100, (p.score / WIN_SCORE) * 100)}%` }} />
+                  </div>
+                </td>
+              ))}
+            </tr>
+            <tr>
+              <td className="sb-label">アウト</td>
+              {players.map((p, i) => (
+                <td key={i} className="sb-dots-cell">
+                  <div className="pc-dots">{outDots(p.outCount)}</div>
+                </td>
+              ))}
+            </tr>
+            <tr>
+              <td className="sb-label">ターン</td>
+              <td colSpan={2} className="sb-meta-cell">
+                {displayTurn} / {DISPLAY_MAX_TURNS}　残りイス合計: {remainingSum}
+              </td>
+            </tr>
+            {history.length > 0 && (
+              <tr>
+                <td className="sb-label">履歴</td>
+                {players.map((_, i) => {
+                  const rows = history.filter((r) => r.playerIdx === i);
+                  return (
+                    <td key={i} className="sb-history-cell">
+                      {rows.length === 0 ? (
+                        <span className="sb-no-history">—</span>
+                      ) : (
+                        rows.map((r) => (
+                          <div key={r.turn} className="sb-hist-row">
+                            <span className="sh-turn">T{Math.ceil(r.turn / 2)}</span>
+                            <span className="sh-pick">{r.pick}</span>
+                            <span className="sh-icon">{r.isOut ? '💥' : '✅'}</span>
+                            <span className="sh-delta">{r.isOut ? '±0' : `+${r.scoreDelta}`}</span>
+                          </div>
+                        ))
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            )}
+          </tbody>
+        </table>
+      )}
+
+      {tab === 'grid' && (
+        <div className="sgrid-wrap">
+          <ScoreboardGrid
+            players={players}
+            history={history}
+            currentTurn={turn}
+            gameOver={gameOver}
+          />
+        </div>
+      )}
     </div>
   );
 }

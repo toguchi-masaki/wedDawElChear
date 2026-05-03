@@ -26,6 +26,9 @@ export const initialGameState: GameState = {
   gameOver: false,
   winnerIdx: -1,
   winReason: '',
+  timerEnabled: false,
+  timerSeconds: 30,
+  timerStartedAt: null,
 };
 
 export function reducer(state: GameState, action: Action): GameState {
@@ -45,7 +48,11 @@ export function reducer(state: GameState, action: Action): GameState {
     }
 
     case 'SETTER_DONE':
-      return { ...state, phase: 'CHOOSER_PICK' };
+      return {
+        ...state,
+        phase: 'CHOOSER_PICK',
+        timerStartedAt: state.timerEnabled ? new Date().toISOString() : null,
+      };
 
     case 'CHOOSE': {
       const n = action.n;
@@ -152,6 +159,7 @@ export function reducer(state: GameState, action: Action): GameState {
         turn: state.turn + 1,
         outNumbers: new Set(),
         phase: 'SETTER_SETUP',
+        timerStartedAt: state.timerEnabled ? new Date().toISOString() : null,
       };
     }
 

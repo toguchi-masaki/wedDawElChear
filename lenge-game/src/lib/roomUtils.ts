@@ -25,7 +25,11 @@ function generateRoomId(): string {
 
 const makePlayer = (name: string): Player => ({ name, score: 0, outCount: 0 });
 
-export async function createRoom(p1name: string): Promise<string> {
+export async function createRoom(
+  p1name: string,
+  timerEnabled = false,
+  timerSeconds = 30,
+): Promise<string> {
   const roomId = generateRoomId();
   const token = crypto.randomUUID();
 
@@ -43,6 +47,9 @@ export async function createRoom(p1name: string): Promise<string> {
     gameOver: false,
     winnerIdx: -1,
     winReason: '',
+    timerEnabled,
+    timerSeconds,
+    timerStartedAt: null,
   };
 
   const { error } = await supabase.from('rooms').insert({
@@ -73,6 +80,7 @@ export async function joinRoom(roomId: string, p2name: string): Promise<void> {
   const state = deserialize(data.game_state as Record<string, unknown>);
   state.players[1] = makePlayer(p2name);
   state.phase = 'SETTER_SETUP';
+  state.timerStartedAt = state.timerEnabled ? new Date().toISOString() : null;
 
   const { error: updateError } = await supabase
     .from('rooms')

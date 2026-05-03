@@ -98,6 +98,9 @@ function GameRoom() {
         <WaitingScreen
           message="相手がアウト番号を設定中..."
           playerName={players[myIdx].name}
+          timerEnabled={gameState.timerEnabled}
+          timerStartedAt={gameState.timerStartedAt}
+          timerSeconds={gameState.timerSeconds}
         />
       )}
 
@@ -112,6 +115,9 @@ function GameRoom() {
         <WaitingScreen
           message="相手がイスを選択中..."
           playerName={players[myIdx].name}
+          timerEnabled={gameState.timerEnabled}
+          timerStartedAt={gameState.timerStartedAt}
+          timerSeconds={gameState.timerSeconds}
         />
       )}
 

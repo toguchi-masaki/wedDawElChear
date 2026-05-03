@@ -38,7 +38,7 @@ export function SetterSetupScreen({ state, onToggleOut, onDone }: Props) {
         disabled={state.outNumbers.size === 0}
         onClick={onDone}
       >
-        設定完了 → 守備側へ渡す
+        設定完了
       </button>
     </div>
   );

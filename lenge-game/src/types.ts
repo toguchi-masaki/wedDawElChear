@@ -1,8 +1,7 @@
 export type Phase =
   | 'START'
-  | 'SETTER_PRIVATE'
+  | 'LOBBY'
   | 'SETTER_SETUP'
-  | 'CHOOSER_PRIVATE'
   | 'CHOOSER_PICK'
   | 'RESULT'
   | 'GAME_OVER';

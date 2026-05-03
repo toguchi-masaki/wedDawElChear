@@ -12,8 +12,11 @@ export function useRoom(roomId: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [opponentConnected, setOpponentConnected] = useState(true);
+  const [disconnectedAt, setDisconnectedAt] = useState<number | null>(null);
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
+  const opponentEverSeenRef = useRef(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(`room_${roomId}_playerIdx`);
@@ -61,6 +64,41 @@ export function useRoom(roomId: string) {
     };
   }, [roomId]);
 
+  // Supabase Presence で相手の接続状態を監視
+  useEffect(() => {
+    if (myIdx === null) return;
+
+    const opponentIdx = myIdx === 0 ? 1 : 0;
+    let presenceChannel: RealtimeChannel;
+
+    presenceChannel = supabase
+      .channel(`players_${roomId}_presence`)
+      .on('presence', { event: 'sync' }, () => {
+        const presenceState = presenceChannel.presenceState<{ playerIdx: number }>();
+        const opponentPresent = Object.values(presenceState).some((presences) =>
+          presences.some((p) => p.playerIdx === opponentIdx)
+        );
+
+        if (opponentPresent) {
+          opponentEverSeenRef.current = true;
+          setOpponentConnected(true);
+          setDisconnectedAt(null);
+        } else if (opponentEverSeenRef.current) {
+          setOpponentConnected(false);
+          setDisconnectedAt((prev) => prev ?? Date.now());
+        }
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presenceChannel.track({ playerIdx: myIdx });
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+    };
+  }, [roomId, myIdx]);
+
   const dispatch = useCallback(
     (action: Action) => {
       const newState = reducer(stateRef.current, action);
@@ -76,5 +114,5 @@ export function useRoom(roomId: string) {
     [roomId]
   );
 
-  return { gameState, dispatch, myIdx, isLoading, isConnected, error };
+  return { gameState, dispatch, myIdx, isLoading, isConnected, error, opponentConnected, disconnectedAt };
 }

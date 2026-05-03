@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useRoom } from './hooks/useRoom';
 import { StartScreen } from './components/StartScreen';
@@ -12,6 +13,8 @@ import { Scoreboard } from './components/Scoreboard';
 import { SpectatorScreen } from './components/SpectatorScreen';
 import { WaitingLobbyScreen } from './components/WaitingLobbyScreen';
 
+const AUTO_SURRENDER_DELAY = 30;
+
 function GameRoomRoute() {
   const [searchParams] = useSearchParams();
   if (searchParams.get('role') === 'spectator') return <SpectatorScreen />;
@@ -21,7 +24,35 @@ function GameRoomRoute() {
 function GameRoom() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
-  const { gameState, dispatch, myIdx, isLoading, error } = useRoom(roomId!);
+  const { gameState, dispatch, myIdx, isLoading, error, opponentConnected, disconnectedAt } = useRoom(roomId!);
+  const [surrenderCountdown, setSurrenderCountdown] = useState<number | null>(null);
+
+  const { phase, players, setterIdx, chooserIdx } = gameState;
+  const inGame = phase !== 'LOBBY' && phase !== 'WAITING_LOBBY';
+
+  // 自動降参カウントダウン
+  useEffect(() => {
+    if (!disconnectedAt || !inGame || gameState.gameOver || myIdx === null) {
+      setSurrenderCountdown(null);
+      return;
+    }
+
+    const tick = () => {
+      const elapsed = Math.floor((Date.now() - disconnectedAt) / 1000);
+      const remaining = AUTO_SURRENDER_DELAY - elapsed;
+      if (remaining <= 0) {
+        setSurrenderCountdown(0);
+        const opponentIdx = myIdx === 0 ? 1 : 0;
+        dispatch({ type: 'SURRENDER', surrendererIdx: opponentIdx });
+      } else {
+        setSurrenderCountdown(remaining);
+      }
+    };
+
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [disconnectedAt, inGame, gameState.gameOver, myIdx, dispatch]);
 
   if (isLoading) {
     return (
@@ -53,10 +84,8 @@ function GameRoom() {
     );
   }
 
-  const { phase, players, setterIdx, chooserIdx } = gameState;
   const amISetter = myIdx === setterIdx;
   const amIChooser = myIdx === chooserIdx;
-  const inGame = phase !== 'LOBBY' && phase !== 'WAITING_LOBBY';
 
   const handleAbort = () => {
     if (window.confirm('ゲームを中断してトップへ戻りますか？')) {
@@ -64,10 +93,26 @@ function GameRoom() {
     }
   };
 
+  const handleSurrender = () => {
+    if (window.confirm('本当に降参しますか？')) {
+      dispatch({ type: 'SURRENDER', surrendererIdx: myIdx });
+    }
+  };
+
   return (
     <main>
+      {inGame && !opponentConnected && (
+        <div className="disconnect-banner">
+          <span>⚠ 相手の接続が切断されました</span>
+          {surrenderCountdown !== null && surrenderCountdown > 0 && (
+            <span className="disconnect-countdown">{surrenderCountdown}秒後に自動降参</span>
+          )}
+        </div>
+      )}
+
       {inGame && phase !== 'GAME_OVER' && (
         <div className="game-header">
+          <button className="btn btn-surrender" onClick={handleSurrender}>降参</button>
           <button className="btn btn-abort" onClick={handleAbort}>中断</button>
         </div>
       )}

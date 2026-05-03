@@ -9,7 +9,8 @@ export type Action =
   | { type: 'CONTINUE' }
   | { type: 'RESET' }
   | { type: 'SYNC_STATE'; state: GameState }
-  | { type: 'PLAYER_READY'; playerIdx: 0 | 1 };
+  | { type: 'PLAYER_READY'; playerIdx: 0 | 1 }
+  | { type: 'SURRENDER'; surrendererIdx: 0 | 1 };
 
 const makePlayer = (name: string): Player => ({ name, score: 0, outCount: 0 });
 
@@ -176,6 +177,17 @@ export function reducer(state: GameState, action: Action): GameState {
           phase: 'SETTER_SETUP',
           timerStartedAt: state.timerEnabled ? new Date().toISOString() : null,
         }),
+      };
+    }
+
+    case 'SURRENDER': {
+      const winnerIdx = action.surrendererIdx === 0 ? 1 : 0;
+      return {
+        ...state,
+        gameOver: true,
+        winnerIdx,
+        winReason: `${state.players[action.surrendererIdx].name} が降参`,
+        phase: 'GAME_OVER',
       };
     }
 

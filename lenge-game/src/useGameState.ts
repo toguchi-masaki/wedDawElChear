@@ -10,7 +10,7 @@ export type Action =
   | { type: 'RESET' }
   | { type: 'SYNC_STATE'; state: GameState }
   | { type: 'PLAYER_READY'; playerIdx: 0 | 1 }
-  | { type: 'SURRENDER'; surrendererIdx: 0 | 1 };
+  | { type: 'ABORT' };
 
 const makePlayer = (name: string): Player => ({ name, score: 0, outCount: 0 });
 
@@ -32,6 +32,7 @@ export const initialGameState: GameState = {
   timerSeconds: 30,
   timerStartedAt: null,
   readyFlags: [false, false],
+  aborted: false,
 };
 
 export function reducer(state: GameState, action: Action): GameState {
@@ -180,16 +181,13 @@ export function reducer(state: GameState, action: Action): GameState {
       };
     }
 
-    case 'SURRENDER': {
-      const winnerIdx = action.surrendererIdx === 0 ? 1 : 0;
+    case 'ABORT':
       return {
         ...state,
         gameOver: true,
-        winnerIdx,
-        winReason: `${state.players[action.surrendererIdx].name} が降参`,
+        aborted: true,
         phase: 'GAME_OVER',
       };
-    }
 
     case 'RESET':
       return { ...initialGameState };

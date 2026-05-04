@@ -7,14 +7,17 @@ import { CountdownTimer } from './CountdownTimer';
 interface Props {
   state: GameState;
   onChoose: (n: number) => void;
+  onPendingPickChange?: (n: number | null) => void;
 }
 
-export function ChooserPickScreen({ state, onChoose }: Props) {
+export function ChooserPickScreen({ state, onChoose, onPendingPickChange }: Props) {
   const defender = state.players[state.chooserIdx];
   const [pending, setPending] = useState<number | null>(null);
 
   const handlePick = (n: number) => {
-    setPending((prev) => (prev === n ? null : n));
+    const next = pending === n ? null : n;
+    setPending(next);
+    onPendingPickChange?.(next);
   };
 
   const handleConfirm = () => {

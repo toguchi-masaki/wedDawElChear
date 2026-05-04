@@ -97,6 +97,7 @@ export function SpectatorScreen() {
             <LengeGrid
               deactivated={deactivated}
               markedOut={phase === 'CHOOSER_PICK' ? gameState.outNumbers : undefined}
+              markedPick={phase === 'CHOOSER_PICK' && gameState.pendingPick != null ? new Set([gameState.pendingPick]) : undefined}
               revealedPick={phase === 'RESULT' ? lastPick : null}
               revealedIsOut={phase === 'RESULT' ? lastIsOut : false}
             />

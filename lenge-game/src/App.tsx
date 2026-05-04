@@ -21,7 +21,7 @@ function GameRoomRoute() {
 function GameRoom() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
-  const { gameState, dispatch, myIdx, isLoading, error, opponentConnected } = useRoom(roomId!);
+  const { gameState, dispatch, updatePendingPick, myIdx, isLoading, error, opponentConnected } = useRoom(roomId!);
 
   const { phase, players, setterIdx, chooserIdx } = gameState;
   const inGame = phase !== 'LOBBY' && phase !== 'WAITING_LOBBY';
@@ -127,6 +127,7 @@ function GameRoom() {
         <ChooserPickScreen
           state={gameState}
           onChoose={(n) => dispatch({ type: 'CHOOSE', n })}
+          onPendingPickChange={updatePendingPick}
         />
       )}
 
@@ -137,6 +138,7 @@ function GameRoom() {
           timerEnabled={gameState.timerEnabled}
           timerStartedAt={gameState.timerStartedAt}
           timerSeconds={gameState.timerSeconds}
+          pendingPick={gameState.pendingPick}
         />
       )}
 

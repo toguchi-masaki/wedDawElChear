@@ -16,11 +16,19 @@ export function useRoom(roomId: string) {
   const stateRef = useRef(gameState);
   stateRef.current = gameState;
   const opponentEverSeenRef = useRef(false);
+  const pendingPickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingPickValueRef = useRef<number | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem(`room_${roomId}_playerIdx`);
     if (stored !== null) setMyIdx(parseInt(stored) as 0 | 1);
   }, [roomId]);
+
+  useEffect(() => {
+    return () => {
+      if (pendingPickTimerRef.current) clearTimeout(pendingPickTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     let channel: RealtimeChannel;
@@ -98,6 +106,11 @@ export function useRoom(roomId: string) {
 
   const dispatch = useCallback(
     (action: Action) => {
+      // pendingPick の遅延書き込みをキャンセル
+      if (pendingPickTimerRef.current) {
+        clearTimeout(pendingPickTimerRef.current);
+        pendingPickTimerRef.current = null;
+      }
       const newState = reducer(stateRef.current, action);
       setGameState(newState);
       supabase
@@ -111,5 +124,27 @@ export function useRoom(roomId: string) {
     [roomId]
   );
 
-  return { gameState, dispatch, myIdx, isLoading, isConnected, error, opponentConnected };
+  // 守備側の選択中状態をデバウンスして Supabase に同期する
+  const updatePendingPick = useCallback(
+    (n: number | null) => {
+      pendingPickValueRef.current = n;
+      const newState = { ...stateRef.current, pendingPick: n };
+      setGameState(newState);
+      stateRef.current = newState;
+
+      if (pendingPickTimerRef.current) clearTimeout(pendingPickTimerRef.current);
+      pendingPickTimerRef.current = setTimeout(() => {
+        supabase
+          .from('rooms')
+          .update({ game_state: serialize({ ...stateRef.current, pendingPick: pendingPickValueRef.current }) })
+          .eq('id', roomId)
+          .then(({ error: e }) => {
+            if (e) console.error('pendingPick update failed:', e);
+          });
+      }, 500);
+    },
+    [roomId]
+  );
+
+  return { gameState, dispatch, updatePendingPick, myIdx, isLoading, isConnected, error, opponentConnected };
 }

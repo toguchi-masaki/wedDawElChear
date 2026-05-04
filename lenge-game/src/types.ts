@@ -40,6 +40,7 @@ export interface GameState {
   timerStartedAt: string | null;
   readyFlags: [boolean, boolean];
   aborted: boolean;
+  pendingPick: number | null;
 }
 
 export const WIN_SCORE = 40;

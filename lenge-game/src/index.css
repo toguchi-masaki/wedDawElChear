@@ -277,29 +277,10 @@ h2 {
   box-shadow: 0 0 8px var(--out-glow);
 }
 
-/* ── Scoreboard Tabs ── */
-.sb-tab-bar {
-  display: flex;
-  border-bottom: 1px solid var(--border);
-}
-.sb-tab {
-  flex: 1;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  padding: 8px 0;
-  font-size: .78rem;
-  font-weight: 600;
-  font-family: inherit;
-  color: var(--dim);
-  cursor: pointer;
-  transition: color .2s, border-color .2s;
-  letter-spacing: .04em;
-}
-.sb-tab.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
+/* ── Scoreboard Section Divider ── */
+.sb-section-divider {
+  height: 1px;
+  background: var(--border);
 }
 
 /* ── ScoreboardGrid ── */
@@ -421,7 +402,12 @@ h2 {
   border-color: rgba(52, 211, 153, 0.6);
   background: rgba(52, 211, 153, 0.12);
   color: var(--safe);
-  box-shadow: 0 0 20px rgba(52, 211, 153, 0.2), inset 0 0 20px rgba(52, 211, 153, 0.04);
+  animation: pick-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pick-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(52, 211, 153, 0.2), inset 0 0 20px rgba(52, 211, 153, 0.04); }
+  50%       { box-shadow: 0 0 36px rgba(52, 211, 153, 0.45), inset 0 0 24px rgba(52, 211, 153, 0.1); }
 }
 .lb.dead {
   opacity: .15;
@@ -575,6 +561,22 @@ h2 {
 .out-tally { font-size: .85rem; color: var(--dim); text-align: center; margin-top: 12px; font-weight: 500; }
 .out-tally strong { color: var(--out); }
 
+/* ── Pending Pick Indicator ── */
+.pending-pick-indicator {
+  font-size: .85rem;
+  color: var(--safe);
+  font-weight: 500;
+  animation: pick-pulse-text 1.2s ease-in-out infinite;
+}
+.pending-pick-indicator strong {
+  font-size: 1rem;
+  font-weight: 800;
+}
+@keyframes pick-pulse-text {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
 /* ── Divider ── */
 .rules-divider {
   width: 100%;
@@ -679,4 +681,70 @@ h2 {
 
 .spectator-invite summary {
   font-size: 0.85rem;
+}
+
+/* ── Responsive (mobile) ── */
+@media (max-width: 480px) {
+  #root {
+    padding: 8px;
+    align-items: flex-start;
+  }
+
+  main {
+    max-width: 100%;
+  }
+
+  h1 {
+    font-size: 2.2rem;
+  }
+
+  h2 {
+    font-size: 1.2rem;
+  }
+
+  .card {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  /* イスグリッド: ボタン間隔を詰める */
+  .lenge-grid {
+    gap: 7px;
+  }
+
+  /* スコア数値を少し小さく */
+  .sb-score {
+    font-size: 1.35rem;
+  }
+
+  /* プレイヤー名の折り返し防止 */
+  .sb-name {
+    max-width: 72px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sgrid-th-player {
+    max-width: 72px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ボタンのタップ領域確保 */
+  .btn {
+    padding: 12px 20px;
+    font-size: 0.95rem;
+  }
+
+  /* スコアボードグリッドを横スクロール可能に */
+  .sgrid-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sgrid-table {
+    min-width: 220px;
+  }
 }

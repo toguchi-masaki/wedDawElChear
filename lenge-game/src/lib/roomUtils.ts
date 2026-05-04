@@ -16,6 +16,7 @@ export function deserialize(data: Record<string, unknown>): GameState {
     deactivated: new Set((data.deactivated as number[]) ?? []),
     outNumbers: new Set((data.outNumbers as number[]) ?? []),
     readyFlags: (data.readyFlags as [boolean, boolean]) ?? [false, false],
+    pendingPick: (data.pendingPick as number | null) ?? null,
   };
 }
 
@@ -53,6 +54,7 @@ export async function createRoom(
     timerStartedAt: null,
     readyFlags: [false, false],
     aborted: false,
+    pendingPick: null,
   };
 
   const { error } = await supabase.from('rooms').insert({

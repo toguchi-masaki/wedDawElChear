@@ -33,6 +33,7 @@ export const initialGameState: GameState = {
   timerStartedAt: null,
   readyFlags: [false, false],
   aborted: false,
+  pendingPick: null,
 };
 
 export function reducer(state: GameState, action: Action): GameState {
@@ -56,6 +57,7 @@ export function reducer(state: GameState, action: Action): GameState {
         ...state,
         phase: 'CHOOSER_PICK',
         timerStartedAt: state.timerEnabled ? new Date().toISOString() : null,
+        pendingPick: null,
       };
 
     case 'CHOOSE': {
@@ -151,6 +153,7 @@ export function reducer(state: GameState, action: Action): GameState {
         winnerIdx,
         winReason,
         phase: 'RESULT',
+        pendingPick: null,
       };
     }
 
@@ -164,6 +167,7 @@ export function reducer(state: GameState, action: Action): GameState {
         outNumbers: new Set(),
         phase: 'SETTER_SETUP',
         timerStartedAt: state.timerEnabled ? new Date().toISOString() : null,
+        pendingPick: null,
       };
     }
 

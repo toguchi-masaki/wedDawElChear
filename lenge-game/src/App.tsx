@@ -21,7 +21,7 @@ function GameRoomRoute() {
 function GameRoom() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
-  const { gameState, dispatch, updatePendingPick, myIdx, isLoading, error, opponentConnected } = useRoom(roomId!);
+  const { gameState, dispatch, updatePendingPick, resync, myIdx, isLoading, error, opponentConnected, disconnected } = useRoom(roomId!);
 
   const { phase, players, setterIdx, chooserIdx } = gameState;
   const inGame = phase !== 'LOBBY' && phase !== 'WAITING_LOBBY';
@@ -68,6 +68,19 @@ function GameRoom() {
 
   return (
     <main>
+      {disconnected && (
+        <div className="reconnect-overlay">
+          <div className="reconnect-card">
+            <div className="spinner" />
+            <h2>接続が切れました</h2>
+            <p className="hint">サーバーへの再接続を試みています...</p>
+            <button className="btn btn-primary btn-full" onClick={resync}>
+              再同期する
+            </button>
+          </div>
+        </div>
+      )}
+
       {inGame && !opponentConnected && (
         <div className="disconnect-banner">
           <span>⚠ 相手の接続が切断されました</span>

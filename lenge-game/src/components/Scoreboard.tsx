@@ -1,8 +1,11 @@
 import type { TurnRecord, Player } from '../types';
 import { MAX_OUTS, WIN_SCORE, LENGE_COUNT } from '../types';
 import { ScoreboardGrid } from './ScoreboardGrid';
+import { HistoryPanel } from './HistoryPanel';
+import { useCountUp } from '../hooks/useCountUp';
 
 const DISPLAY_MAX_TURNS = 8;
+const NEAR_WIN = 30;
 
 interface Props {
   players: [Player, Player];
@@ -12,6 +15,23 @@ interface Props {
   deactivated: Set<number>;
   history: TurnRecord[];
   gameOver?: boolean;
+}
+
+function ScoreCell({ score }: { score: number }) {
+  const display = useCountUp(score);
+  const near = score >= NEAR_WIN && score < WIN_SCORE;
+  return (
+    <td className="sb-score-cell">
+      <span className={`sb-score ${near ? 'sb-score-near' : ''}`}>{display}</span>
+      <div className="sb-bar-wrap">
+        <div
+          className={`sb-bar ${near ? 'sb-bar-near' : ''}`}
+          style={{ width: `${Math.min(100, (score / WIN_SCORE) * 100)}%` }}
+        />
+      </div>
+      {near && <span className="sb-near-tag">あと{WIN_SCORE - score}点</span>}
+    </td>
+  );
 }
 
 export function Scoreboard({ players, setterIdx, chooserIdx, turn, deactivated, history, gameOver = false }: Props) {
@@ -47,12 +67,7 @@ export function Scoreboard({ players, setterIdx, chooserIdx, turn, deactivated, 
           <tr>
             <td className="sb-label">スコア</td>
             {players.map((p, i) => (
-              <td key={i} className="sb-score-cell">
-                <span className="sb-score">{p.score}</span>
-                <div className="sb-bar-wrap">
-                  <div className="sb-bar" style={{ width: `${Math.min(100, (p.score / WIN_SCORE) * 100)}%` }} />
-                </div>
-              </td>
+              <ScoreCell key={i} score={p.score} />
             ))}
           </tr>
           <tr>
@@ -80,6 +95,8 @@ export function Scoreboard({ players, setterIdx, chooserIdx, turn, deactivated, 
           gameOver={gameOver}
         />
       </div>
+      <div className="sb-section-divider" />
+      <HistoryPanel players={players} history={history} defaultOpen={gameOver} />
     </div>
   );
 }

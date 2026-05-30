@@ -1,4 +1,5 @@
 import type { GameState } from '../types';
+import { Confetti } from './Confetti';
 
 interface Props {
   state: GameState;
@@ -11,6 +12,7 @@ export function GameOverScreen({ state, onReset }: Props) {
 
   return (
     <div className="screen active" style={{ gap: 24 }}>
+      {winner && <Confetti />}
       <div className="trophy">🏆</div>
 
       <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>

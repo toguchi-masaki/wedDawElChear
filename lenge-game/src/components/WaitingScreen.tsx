@@ -25,7 +25,10 @@ export function WaitingScreen({ message, playerName, timerEnabled, timerStartedA
 
       <div className="card" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
         <div className="spinner" />
-        <p className="sub">{message}</p>
+        <p className="sub">
+          {message}
+          <span className="thinking-dots"><i /><i /><i /></span>
+        </p>
         {pendingPick != null && (
           <p className="pending-pick-indicator">
             イス <strong>{pendingPick}</strong> を検討中...

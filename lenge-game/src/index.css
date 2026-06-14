@@ -162,6 +162,21 @@ h2 {
   margin-bottom: 4px;
   animation: fadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+.reconnect-banner {
+  width: 100%;
+  background: rgba(74, 222, 128, 0.1);
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  border-radius: 10px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--success);
+  margin-bottom: 4px;
+  animation: fadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
 .disconnect-countdown {
   font-size: .8rem;
   font-weight: 500;
@@ -915,16 +930,20 @@ h2 {
   gap: 16px;
 }
 .spectator-col-info { margin-top: 16px; }
+.spectator-col-history { margin-top: 16px; }
 
 @media (min-width: 900px) {
-  .spectator-main { max-width: 1080px; }
+  .spectator-main { max-width: 1280px; }
   .spectator-layout {
     display: grid;
-    grid-template-columns: 1.1fr 0.9fr;
+    grid-template-columns: 1.1fr 0.9fr 0.8fr;
     gap: 24px;
     align-items: start;
   }
   .spectator-col-info { margin-top: 0; }
+  .spectator-col-history { margin-top: 0; }
+  .spectator-col-history .history-panel { padding: 14px; }
+  .spectator-col-history .history-list { max-height: 480px; }
   .spectator-col-board .lenge-grid { gap: 14px; }
   .spectator-col-board .lb { font-size: 1.6rem; }
   .history-list { max-height: 360px; }

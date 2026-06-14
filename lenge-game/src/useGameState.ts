@@ -79,7 +79,7 @@ export function reducer(state: GameState, action: Action): GameState {
       const scoreDelta = isOut ? 0 : n;
       const newHistory = [
         ...state.history,
-        { turn: state.turn, playerIdx: state.chooserIdx, pick: n, isOut, scoreDelta },
+        { turn: state.turn, playerIdx: state.chooserIdx, pick: n, isOut, scoreDelta, outNumbers: Array.from(state.outNumbers) },
       ];
 
       let gameOver = false;
@@ -122,22 +122,6 @@ export function reducer(state: GameState, action: Action): GameState {
           } else {
             winnerIdx = -1;
             winReason = '残りイス1枚 — 引き分け';
-          }
-        }
-      }
-
-      if (!gameOver) {
-        const remainingSum = Array.from({ length: LENGE_COUNT }, (_, i) => i + 1)
-          .filter((i) => !newDeactivated.has(i))
-          .reduce((a, b) => a + b, 0);
-        const [s0, s1] = [players[0].score, players[1].score];
-        if (s0 !== s1) {
-          const trailingScore = Math.min(s0, s1);
-          const leadingScore = Math.max(s0, s1);
-          if (trailingScore + remainingSum < leadingScore) {
-            gameOver = true;
-            winnerIdx = s0 > s1 ? 0 : 1;
-            winReason = `逆転不可のスコア差により ${players[winnerIdx].name} が勝利`;
           }
         }
       }

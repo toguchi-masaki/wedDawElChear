@@ -39,7 +39,7 @@ export function ChooserPickScreen({ state, onChoose, onPendingPickChange }: Prop
   return (
     <div className="screen active">
       <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <span className="badge badge-chooser">守備</span>
+        <span className="badge badge-chooser">選択</span>
         <h2 style={{ marginTop: 4 }}>{defender.name}</h2>
       </div>
 

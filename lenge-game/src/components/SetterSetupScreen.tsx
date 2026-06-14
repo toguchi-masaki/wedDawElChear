@@ -27,7 +27,7 @@ export function SetterSetupScreen({ state, onToggleOut, onDone }: Props) {
   return (
     <div className="screen active">
       <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <span className="badge badge-setter">攻撃</span>
+        <span className="badge badge-setter">仕掛け</span>
         <h2 style={{ marginTop: 4 }}>{attacker.name}</h2>
       </div>
 

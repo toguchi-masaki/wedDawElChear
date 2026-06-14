@@ -17,6 +17,7 @@ interface Props {
   history: TurnRecord[];
   gameOver?: boolean;
   defaultOpen?: boolean;
+  showHistory?: boolean;
 }
 
 function ScoreCell({ score }: { score: number }) {
@@ -36,7 +37,7 @@ function ScoreCell({ score }: { score: number }) {
   );
 }
 
-export function Scoreboard({ players, setterIdx, chooserIdx, turn, deactivated, history, gameOver = false, defaultOpen = false }: Props) {
+export function Scoreboard({ players, setterIdx, chooserIdx, turn, deactivated, history, gameOver = false, defaultOpen = false, showHistory = true }: Props) {
   const remainingSum = Array.from({ length: LENGE_COUNT }, (_, i) => i + 1)
     .filter((i) => !deactivated.has(i))
     .reduce((a, b) => a + b, 0);
@@ -77,8 +78,8 @@ export function Scoreboard({ players, setterIdx, chooserIdx, turn, deactivated, 
               <th key={i} className={i === chooserIdx ? 'sb-chooser' : i === setterIdx ? 'sb-setter' : ''}>
                 <div className="sb-name">{p.name}</div>
                 <div>
-                  {i === chooserIdx && <span className="badge badge-chooser">守備</span>}
-                  {i === setterIdx && <span className="badge badge-setter">攻撃</span>}
+                  {i === chooserIdx && <span className="badge badge-chooser">選択</span>}
+                  {i === setterIdx && <span className="badge badge-setter">仕掛け</span>}
                 </div>
               </th>
             ))}
@@ -116,8 +117,12 @@ export function Scoreboard({ players, setterIdx, chooserIdx, turn, deactivated, 
           gameOver={gameOver}
         />
       </div>
-      <div className="sb-section-divider" />
-      <HistoryPanel players={players} history={history} defaultOpen={gameOver} />
+      {showHistory && (
+        <>
+          <div className="sb-section-divider" />
+          <HistoryPanel players={players} history={history} defaultOpen={gameOver} />
+        </>
+      )}
       </>
       )}
     </div>

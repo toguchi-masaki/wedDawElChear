@@ -14,7 +14,7 @@ export function ResultScreen({ state, onContinue }: Props) {
 
   const continueLabel = gameOver
     ? '結果を見る →'
-    : `次のターンへ（次の攻撃側: ${nextAttacker}）`;
+    : `次のターンへ（次の仕掛け側: ${nextAttacker}）`;
 
   return (
     <div className="screen active">

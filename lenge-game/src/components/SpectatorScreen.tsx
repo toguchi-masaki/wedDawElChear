@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSpectatorRoom } from '../hooks/useSpectatorRoom';
 import { Scoreboard } from './Scoreboard';
+import { HistoryPanel } from './HistoryPanel';
 import { LengeGrid } from './LengeGrid';
 import { CountdownTimer } from './CountdownTimer';
 import { ResultFlash } from './ResultFlash';
@@ -8,8 +9,8 @@ import { Confetti } from './Confetti';
 
 const PHASE_LABELS: Record<string, string> = {
   LOBBY: '対戦開始待ち',
-  SETTER_SETUP: '攻撃側がアウト番号を設定中...',
-  CHOOSER_PICK: '守備側がイスを選択中...',
+  SETTER_SETUP: '仕掛け側がアウト番号を設定中...',
+  CHOOSER_PICK: '選択側がイスを選択中...',
   RESULT: '結果発表',
   GAME_OVER: 'ゲーム終了',
 };
@@ -138,7 +139,14 @@ export function SpectatorScreen() {
               history={history}
               gameOver={gameOver}
               defaultOpen
+              showHistory={false}
             />
+          </div>
+
+          <div className="spectator-col-history">
+            <div className="scoreboard-wrap">
+              <HistoryPanel players={players} history={history} defaultOpen />
+            </div>
           </div>
         </div>
       )}

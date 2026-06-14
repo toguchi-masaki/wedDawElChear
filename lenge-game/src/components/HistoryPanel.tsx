@@ -7,35 +7,27 @@ interface Props {
 }
 
 export function HistoryPanel({ players, history, defaultOpen = false }: Props) {
-  const running: [number, number] = [0, 0];
-  const rows = history.map((r) => {
-    if (r.isOut) running[r.playerIdx] = 0;
-    else running[r.playerIdx] += r.scoreDelta;
-    return { rec: r, total: running[r.playerIdx] };
-  });
-
   return (
     <details className="history-panel" open={defaultOpen}>
-      <summary>選択履歴（全{history.length}件）</summary>
+      <summary>仕掛け履歴（全{history.length}件）</summary>
       {history.length === 0 ? (
         <p className="history-empty">まだ記録がありません</p>
       ) : (
         <ol className="history-list">
-          {rows.map(({ rec, total }, i) => (
-            <li
-              key={i}
-              className={`history-row ${rec.isOut ? 'is-out' : 'is-safe'}`}
-            >
-              <span className="hp-turn">T{Math.ceil(rec.turn / 2)}</span>
-              <span className="hp-name">{players[rec.playerIdx].name}</span>
-              <span className="hp-pick">イス{rec.pick}</span>
-              <span className="hp-mark">{rec.isOut ? '×' : '○'}</span>
-              <span className="hp-delta">
-                {rec.isOut ? '±0' : `+${rec.scoreDelta}`}
-              </span>
-              <span className="hp-total">→ {total}</span>
-            </li>
-          ))}
+          {history.map((rec, i) => {
+            const setterIdx = rec.playerIdx === 0 ? 1 : 0;
+            return (
+              <li
+                key={i}
+                className={`history-row ${rec.isOut ? 'is-out' : 'is-safe'}`}
+              >
+                <span className="hp-turn">T{Math.ceil(rec.turn / 2)}</span>
+                <span className="hp-name">{players[setterIdx].name}</span>
+                <span className="hp-pick">イス{(rec.outNumbers ?? []).join('・')}</span>
+                <span className="hp-mark">{rec.isOut ? '命中' : '回避'}</span>
+              </li>
+            );
+          })}
         </ol>
       )}
     </details>

@@ -19,6 +19,7 @@ export interface TurnRecord {
   pick: number;
   isOut: boolean;
   scoreDelta: number;
+  outNumbers: number[];
 }
 
 export interface GameState {

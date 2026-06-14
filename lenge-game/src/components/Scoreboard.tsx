@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { TurnRecord, Player } from '../types';
 import { MAX_OUTS, WIN_SCORE, LENGE_COUNT } from '../types';
 import { ScoreboardGrid } from './ScoreboardGrid';
@@ -15,6 +16,7 @@ interface Props {
   deactivated: Set<number>;
   history: TurnRecord[];
   gameOver?: boolean;
+  defaultOpen?: boolean;
 }
 
 function ScoreCell({ score }: { score: number }) {
@@ -34,12 +36,13 @@ function ScoreCell({ score }: { score: number }) {
   );
 }
 
-export function Scoreboard({ players, setterIdx, chooserIdx, turn, deactivated, history, gameOver = false }: Props) {
+export function Scoreboard({ players, setterIdx, chooserIdx, turn, deactivated, history, gameOver = false, defaultOpen = false }: Props) {
   const remainingSum = Array.from({ length: LENGE_COUNT }, (_, i) => i + 1)
     .filter((i) => !deactivated.has(i))
     .reduce((a, b) => a + b, 0);
 
   const displayTurn = Math.ceil(turn / 2);
+  const [open, setOpen] = useState(gameOver || defaultOpen);
 
   const outDots = (count: number) =>
     Array.from({ length: MAX_OUTS }, (_, j) => (
@@ -48,6 +51,24 @@ export function Scoreboard({ players, setterIdx, chooserIdx, turn, deactivated, 
 
   return (
     <div className="scoreboard-wrap">
+      <button
+        className="sb-toggle"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+      >
+        <span className="sb-toggle-summary">
+          <span className="sb-toggle-name">{players[0].name}</span>
+          <span className="sb-toggle-score">{players[0].score}</span>
+          <span className="sb-toggle-vs">vs</span>
+          <span className="sb-toggle-score">{players[1].score}</span>
+          <span className="sb-toggle-name">{players[1].name}</span>
+        </span>
+        <span className="sb-toggle-meta">{displayTurn}/{DISPLAY_MAX_TURNS}</span>
+        <span className={`sb-chevron ${open ? 'open' : ''}`}>▾</span>
+      </button>
+
+      {open && (
+      <>
       <table className="scoreboard-table">
         <thead>
           <tr>
@@ -97,6 +118,8 @@ export function Scoreboard({ players, setterIdx, chooserIdx, turn, deactivated, 
       </div>
       <div className="sb-section-divider" />
       <HistoryPanel players={players} history={history} defaultOpen={gameOver} />
+      </>
+      )}
     </div>
   );
 }

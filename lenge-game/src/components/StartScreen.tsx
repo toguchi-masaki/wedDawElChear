@@ -40,30 +40,29 @@ export function StartScreen() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}>
-            <input
-              type="checkbox"
-              checked={timerEnabled}
-              onChange={(e) => setTimerEnabled(e.target.checked)}
-              style={{ width: 18, height: 18, accentColor: 'var(--accent)', cursor: 'pointer' }}
-            />
-            <span className="sub">⏱ 思考時間制限</span>
-          </label>
-
-          {timerEnabled && (
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {TIMER_OPTIONS.map((s) => (
-                <button
-                  key={s}
-                  className={`btn ${timerSeconds === s ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ flex: 1, minWidth: 48 }}
-                  onClick={() => setTimerSeconds(s)}
-                >
-                  {s}秒
-                </button>
-              ))}
-            </div>
-          )}
+          <span className="sub">⏱ 思考時間制限</span>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              className={`btn ${!timerEnabled ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ flex: 1, minWidth: 48 }}
+              onClick={() => setTimerEnabled(false)}
+            >
+              無制限
+            </button>
+            {TIMER_OPTIONS.map((s) => (
+              <button
+                key={s}
+                className={`btn ${timerEnabled && timerSeconds === s ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ flex: 1, minWidth: 48 }}
+                onClick={() => {
+                  setTimerEnabled(true);
+                  setTimerSeconds(s);
+                }}
+              >
+                {s}秒
+              </button>
+            ))}
+          </div>
         </div>
 
         {error && <p style={{ color: 'var(--out)', fontSize: '0.85rem' }}>{error}</p>}

@@ -137,6 +137,7 @@ export function SpectatorScreen() {
               deactivated={deactivated}
               history={history}
               gameOver={gameOver}
+              defaultOpen
             />
           </div>
         </div>

@@ -303,6 +303,49 @@ h2 {
   box-shadow: 0 0 8px var(--out-glow);
 }
 
+/* ── Scoreboard Toggle Header ── */
+.sb-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: none;
+  border-radius: 0;
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+}
+.sb-toggle-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.sb-toggle-name {
+  font-weight: 700;
+  font-size: .85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 6em;
+}
+.sb-toggle-score {
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+.sb-toggle-vs { color: var(--dim); font-size: .72rem; }
+.sb-toggle-meta { color: var(--dim); font-size: .78rem; white-space: nowrap; }
+.sb-chevron {
+  color: var(--dim);
+  font-size: .9rem;
+  transition: transform .25s ease;
+}
+.sb-chevron.open { transform: rotate(180deg); }
+
 /* ── Scoreboard Section Divider ── */
 .sb-section-divider {
   height: 1px;

@@ -108,6 +108,21 @@ export function useRoom(roomId: string) {
     };
   }, [roomId, refetchState, subscribeRoomChannel]);
 
+  // 切断中は online/visibility イベントが発火しないケースの保険として自動で再購読を試みる
+  useEffect(() => {
+    if (!hasConnected || isConnected) return;
+    let attempt = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    const retry = () => {
+      if (isConnectedRef.current) return;
+      subscribeRoomChannel();
+      attempt += 1;
+      timer = setTimeout(retry, Math.min(2000 * 2 ** attempt, 15000));
+    };
+    timer = setTimeout(retry, 2000);
+    return () => clearTimeout(timer);
+  }, [hasConnected, isConnected, subscribeRoomChannel]);
+
   // タブ復帰・ネット復帰時に再取得し、接続が落ちていれば張り直す
   useEffect(() => {
     const recover = () => {

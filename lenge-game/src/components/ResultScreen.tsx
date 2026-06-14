@@ -1,5 +1,6 @@
 import type { GameState } from '../types';
 import { MAX_OUTS } from '../types';
+import { ResultFlash } from './ResultFlash';
 
 interface Props {
   state: GameState;
@@ -17,6 +18,7 @@ export function ResultScreen({ state, onContinue }: Props) {
 
   return (
     <div className="screen active">
+      <ResultFlash isOut={lastIsOut} triggerKey={state.turn} />
       <div className={`result-banner ${lastIsOut ? 'out' : 'safe'}`}>
         <div className="ri">{lastIsOut ? '💥' : '✅'}</div>
         <div className="rt">

@@ -18,6 +18,9 @@ export function useRoom(roomId: string) {
   const opponentEverSeenRef = useRef(false);
   const pendingPickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingPickValueRef = useRef<number | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const isConnectedRef = useRef(false);
+  const [hasConnected, setHasConnected] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(`room_${roomId}_playerIdx`);
@@ -30,46 +33,97 @@ export function useRoom(roomId: string) {
     };
   }, []);
 
+  const refetchState = useCallback(async (): Promise<boolean> => {
+    const { data, error: fetchError } = await supabase
+      .from('rooms')
+      .select('game_state')
+      .eq('id', roomId)
+      .single();
+
+    if (fetchError || !data) return false;
+
+    setGameState(deserialize(data.game_state as Record<string, unknown>));
+    return true;
+  }, [roomId]);
+
+  const subscribeRoomChannel = useCallback(() => {
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    channelRef.current = supabase
+      .channel(`room_${roomId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
+        (payload) => {
+          const incoming = payload.new as { game_state: Record<string, unknown> };
+          setGameState(deserialize(incoming.game_state));
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          isConnectedRef.current = true;
+          setHasConnected(true);
+          setIsConnected(true);
+          // 再購読時に切断中の取りこぼしを取り直す
+          refetchState();
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          isConnectedRef.current = false;
+          setIsConnected(false);
+        }
+      });
+  }, [roomId, refetchState]);
+
+  const resync = useCallback(() => {
+    refetchState();
+    subscribeRoomChannel();
+  }, [refetchState, subscribeRoomChannel]);
+
   useEffect(() => {
-    let channel: RealtimeChannel;
+    let cancelled = false;
 
     async function init() {
-      const { data, error: fetchError } = await supabase
-        .from('rooms')
-        .select('game_state')
-        .eq('id', roomId)
-        .single();
-
-      if (fetchError || !data) {
+      setIsLoading(true);
+      const ok = await refetchState();
+      if (cancelled) return;
+      if (!ok) {
         setError('ルームが見つかりません');
         setIsLoading(false);
         return;
       }
-
-      setGameState(deserialize(data.game_state as Record<string, unknown>));
       setIsLoading(false);
-
-      channel = supabase
-        .channel(`room_${roomId}`)
-        .on(
-          'postgres_changes',
-          { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
-          (payload) => {
-            const incoming = payload.new as { game_state: Record<string, unknown> };
-            setGameState(deserialize(incoming.game_state));
-          }
-        )
-        .subscribe((status) => {
-          setIsConnected(status === 'SUBSCRIBED');
-        });
+      subscribeRoomChannel();
     }
 
     init();
 
     return () => {
-      if (channel) supabase.removeChannel(channel);
+      cancelled = true;
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
-  }, [roomId]);
+  }, [roomId, refetchState, subscribeRoomChannel]);
+
+  // タブ復帰・ネット復帰時に再取得し、接続が落ちていれば張り直す
+  useEffect(() => {
+    const recover = () => {
+      refetchState();
+      if (!isConnectedRef.current) subscribeRoomChannel();
+    };
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') recover();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('online', recover);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('online', recover);
+    };
+  }, [refetchState, subscribeRoomChannel]);
 
   // Supabase Presence で相手の接続状態を監視
   useEffect(() => {
@@ -146,5 +200,7 @@ export function useRoom(roomId: string) {
     [roomId]
   );
 
-  return { gameState, dispatch, updatePendingPick, myIdx, isLoading, isConnected, error, opponentConnected };
+  const disconnected = hasConnected && !isConnected;
+
+  return { gameState, dispatch, updatePendingPick, resync, myIdx, isLoading, isConnected, disconnected, error, opponentConnected };
 }

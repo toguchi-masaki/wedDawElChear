@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useRoom } from './hooks/useRoom';
 import { StartScreen } from './components/StartScreen';
@@ -25,6 +26,18 @@ function GameRoom() {
 
   const { phase, players, setterIdx, chooserIdx } = gameState;
   const inGame = phase !== 'LOBBY' && phase !== 'WAITING_LOBBY';
+
+  const [reconnectToast, setReconnectToast] = useState(false);
+  const prevOpponentRef = useRef(opponentConnected);
+  useEffect(() => {
+    const prev = prevOpponentRef.current;
+    prevOpponentRef.current = opponentConnected;
+    if (!prev && opponentConnected) {
+      setReconnectToast(true);
+      const t = setTimeout(() => setReconnectToast(false), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [opponentConnected]);
 
   if (isLoading) {
     return (
@@ -84,6 +97,12 @@ function GameRoom() {
       {inGame && !opponentConnected && (
         <div className="disconnect-banner">
           <span>⚠ 相手の接続が切断されました</span>
+        </div>
+      )}
+
+      {inGame && opponentConnected && reconnectToast && (
+        <div className="reconnect-banner">
+          <span>✓ 相手が再接続しました</span>
         </div>
       )}
 

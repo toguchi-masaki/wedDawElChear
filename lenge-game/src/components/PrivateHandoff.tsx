@@ -5,8 +5,8 @@ interface Props {
 }
 
 const config = {
-  setter:  { icon: '⚡', label: '攻撃側', color: 'var(--accent)', glow: 'rgba(79, 158, 255, 0.5)' },
-  chooser: { icon: '🪑', label: '守備側', color: 'var(--purple)', glow: 'rgba(192, 132, 252, 0.5)' },
+  setter:  { icon: '⚡', label: '仕掛け側', color: 'var(--accent)', glow: 'rgba(79, 158, 255, 0.5)' },
+  chooser: { icon: '🪑', label: '選択側', color: 'var(--purple)', glow: 'rgba(192, 132, 252, 0.5)' },
 };
 
 export function PrivateHandoff({ role, playerName, onReady }: Props) {

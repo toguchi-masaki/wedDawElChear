@@ -74,9 +74,9 @@ export function StartScreen() {
         </p>
         <div className="rules-divider" style={{ margin: '10px 0 14px' }} />
         <p className="sub">
-          🔄&ensp;毎ターン、<strong style={{ color: 'var(--text)' }}>攻撃側</strong>と<strong style={{ color: 'var(--text)' }}>守備側</strong>を交代しながら進行<br />
-          🔒&ensp;攻撃側：1〜12 のイスから <strong style={{ color: 'var(--text)' }}>1つだけ</strong> アウトを設定<br />
-          🎲&ensp;守備側：アクティブなイスから1つ選ぶ<br />
+          🔄&ensp;毎ターン、<strong style={{ color: 'var(--text)' }}>仕掛け側</strong>と<strong style={{ color: 'var(--text)' }}>選択側</strong>を交代しながら進行<br />
+          🔒&ensp;仕掛け側：1〜12 のイスから <strong style={{ color: 'var(--text)' }}>1つだけ</strong> アウトを設定<br />
+          🎲&ensp;選択側：アクティブなイスから1つ選ぶ<br />
         </p>
         <div className="rules-divider" style={{ margin: '12px 0' }} />
         <p className="sub">
